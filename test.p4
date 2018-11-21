@@ -30,9 +30,41 @@ header_type custom_metadata_t {
 		index:16;
 		flag_finish : 1;
 		cksum_compensate : 16;
+		l4_proto:16;
+		ttl_length:16;
+		payload_csum : 16;
+		netec_index : 16;
+		netec_data : 16;
 	}
 }
 metadata custom_metadata_t meta;
+
+
+
+field_list l4_with_netec_list {
+	ipv4.srcAddr;
+    ipv4.dstAddr;
+	meta.l4_proto;
+	udp.srcPort;
+	udp.dstPort; 
+	udp.length_;
+	meta.netec_index;
+	meta.netec_data;
+	meta.cksum_compensate;
+	//netec.index;
+	//netec.data;
+}
+field_list_calculation l4_with_netec_checksum {
+    input {
+        l4_with_netec_list;
+    }
+    algorithm : csum16;
+    output_width : 16;
+}
+
+calculated_field udp.checksum  {
+	update l4_with_netec_checksum;
+}
 
 action set_egr(egress_spec) {
     modify_field(ig_intr_md_for_tm.ucast_egress_port, egress_spec);
@@ -93,6 +125,7 @@ register r_finish{
 	width : 8;
 	instance_count : 65536;
 }
+
 table t_finish{
 	actions{a_finish;}
 	default_action : a_finish();
@@ -122,8 +155,16 @@ table t_cksum_compensate{
 	default_action : a_cksum_compensate();
 }
 action a_cksum_compensate(){
-	subtract(meta.cksum_compensate,netec.data,meta.res);
+	//subtract(meta.cksum_compensate,netec.data,meta.res);
+	//subtract(meta.cksum_compensate,meta.res,netec.data);
+	modify_field(meta.l4_proto,0x11);
+	modify_field(meta.netec_data,netec.data);
+	modify_field(meta.netec_index,netec.index);
+	modify_field(meta.cksum_compensate,0xc);
 }
+
+
+
 table t_send_res{
 	actions{a_send_res;}
 	default_action:a_send_res();
@@ -133,6 +174,10 @@ action a_send_res(){
 	//subtract_from_field(udp.srcPort,meta.cksum_compensate);
 	modify_field(netec.data,meta.res);
 	modify_field(ig_intr_md_for_tm.ucast_egress_port,136);
+	modify_field(ipv4.identification,meta.cksum_compensate);
+	
+	//modify_field_with_hash_based_offset(udp.checksum,0,l4_with_netec_checksum, 65536);
+
 }
 
 control ingress {
@@ -147,8 +192,8 @@ control ingress {
 		apply(t_xor);
 		apply(t_finish);
 		if(meta.flag_finish == 1){
-			apply(t_cksum_compensate);
 			apply(t_send_res);
+			apply(t_cksum_compensate);
 		}	
 		else{
 			apply(drop_table);

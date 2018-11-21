@@ -22,9 +22,7 @@ import pal_rpc
 import random
 import sys
 import time
-import unittest
-
-from qy.p4_pd_rpc.ttypes import *
+import unittest from qy.p4_pd_rpc.ttypes import *
 from pltfm_pm_rpc.ttypes import *
 from pal_rpc.ttypes import *
 from ptf import config
@@ -87,8 +85,7 @@ class L2Test(pd_base_tests.ThriftInterfaceDataPlane):
         pd_base_tests.ThriftInterfaceDataPlane.setUp(self)
         self.sess_hdl = self.conn_mgr.client_init()
         self.dev_tgt = DevTarget_t(0, hex_to_i16(0xFFFF))
-        self.devPorts = []
-
+        self.devPorts = [
         self.platform_type = "mavericks"
         board_type = self.pltfm_pm.pltfm_pm_board_type_get()
         if re.search("0x0234|0x1234|0x4234|0x5234", hex(board_type)):
@@ -134,7 +131,7 @@ class L2Test(pd_base_tests.ThriftInterfaceDataPlane):
         '''
         self.client.t_modify_ip_table_add_with_a_modify_ip(self.sess_hdl,self.dev_tgt, 
                                         qy_t_modify_ip_match_spec_t(eg_intr_md_egress_port=136),   
-                                        qy_a_modify_ip_action_spec_t(action_ip=ipv4Addr_to_i32("10.0.0.4"),
+                                        qy_a_modify_ip_action_spec_t(action_ip=ipv4Addr_to_i32("10.0.0.3"),
                                                                      action_mac=macAddr_to_string("68:91:d0:61:b4:c4")))
     	self.conn_mgr.complete_operations(self.sess_hdl)
         print "Configuring Mcast"

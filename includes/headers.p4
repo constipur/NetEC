@@ -37,7 +37,22 @@ header udp_t udp;
 header_type netec_t{
 	fields {
 		index : 16 ;
-		data : 16;
+		data_0 : 8;
+		data_1 : 8;
+		data_2 : 8;
+		data_3 : 8;
+		data_4 : 8;
+		data_5 : 8;
+		data_6 : 8;
+		data_7 : 8;
+		data_8 : 8;
+		data_9 : 8;
+		data_10 : 8;
+		data_11 : 8;
+		data_12 : 8;
+		data_13 : 8;
+		data_14 : 8;
+		data_15 : 8;
 	}
 }
 header netec_t netec;

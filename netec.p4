@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 // This is P4 sample source for basic_switching
-
+#include "xor_buffer.p4"
 #include "includes/headers.p4"
 #include "includes/parser.p4"
 #include <tofino/intrinsic_metadata.p4>
@@ -33,8 +33,41 @@ header_type custom_metadata_t {
 		l4_proto:16;
 		ttl_length:16;
 		payload_csum : 16;
+		
 		netec_index : 16;
-		netec_data : 16;
+		netec_data_0 : 8;
+		netec_data_1 : 8;
+		netec_data_2 : 8;
+		netec_data_3 : 8;
+		netec_data_4 : 8;
+		netec_data_5 : 8;
+		netec_data_6 : 8;
+		netec_data_7 : 8;
+		netec_data_8 : 8;
+		netec_data_9 : 8;
+		netec_data_10 : 8;
+		netec_data_11 : 8;
+		netec_data_12: 8;
+		netec_data_13 : 8;
+		netec_data_14 : 8;
+		netec_data_15 : 8;
+
+		netec_res_0 : 8;
+		netec_res_1 : 8;
+		netec_res_2 : 8;
+		netec_res_3 : 8;
+		netec_res_4 : 8;
+		netec_res_5 : 8;
+		netec_res_6 : 8;
+		netec_res_7 : 8;
+		netec_res_8 : 8;
+		netec_res_9 : 8;
+		netec_res_10 : 8;
+		netec_res_11 : 8;
+		netec_res_12: 8;
+		netec_res_13 : 8;
+		netec_res_14 : 8;
+		netec_res_15 : 8;
 	}
 }
 metadata custom_metadata_t meta;
@@ -49,10 +82,23 @@ field_list l4_with_netec_list {
 	udp.dstPort; 
 	udp.length_;
 	meta.netec_index;
-	meta.netec_data;
+	meta.netec_data_0;
+	meta.netec_data_1;
+	meta.netec_data_2;
+	meta.netec_data_3;
+	meta.netec_data_4;
+	meta.netec_data_5;
+	meta.netec_data_6;
+	meta.netec_data_7;
+	meta.netec_data_8;
+	meta.netec_data_9;
+	meta.netec_data_10;
+	meta.netec_data_11;
+	meta.netec_data_12;
+	meta.netec_data_13;
+	meta.netec_data_14;
+	meta.netec_data_15;
 	meta.cksum_compensate;
-	//netec.index;
-	//netec.data;
 }
 field_list_calculation l4_with_netec_checksum {
     input {
@@ -103,23 +149,6 @@ action bypass2_action(){
 	//modify_field(ig_intr_md_for_tm.mcast_grp_a, 666);
 }
 
-register r_xor{
-	width : 16;
-	instance_count : 32768;
-}
-blackbox stateful_alu s_xor{
-	reg : r_xor;
-	update_lo_1_value : register_lo ^ netec.data;
-	output_value : alu_lo;
-	output_dst : meta.res;
-}
-table t_xor{
-	actions{a_xor;}
-	default_action : a_xor();
-}
-action a_xor(){
-	s_xor.execute_stateful_alu(netec.index);
-}
 
 register r_finish{
 	width : 8;
@@ -155,12 +184,25 @@ table t_cksum_compensate{
 	default_action : a_cksum_compensate();
 }
 action a_cksum_compensate(){
-	//subtract(meta.cksum_compensate,netec.data,meta.res);
-	//subtract(meta.cksum_compensate,meta.res,netec.data);
-	modify_field(meta.l4_proto,0x11);
-	modify_field(meta.netec_data,netec.data);
+	modify_field(meta.l4_proto,ipv4.protocol);
+	modify_field(meta.netec_data_0,netec.data_0);
+	modify_field(meta.netec_data_1,netec.data_1);
+	modify_field(meta.netec_data_2,netec.data_2);
+	modify_field(meta.netec_data_3,netec.data_3);
+	modify_field(meta.netec_data_4,netec.data_4);
+	modify_field(meta.netec_data_5,netec.data_5);
+	modify_field(meta.netec_data_6,netec.data_6);
+	modify_field(meta.netec_data_7,netec.data_7);
+	modify_field(meta.netec_data_8,netec.data_8);
+	modify_field(meta.netec_data_9,netec.data_9);
+	modify_field(meta.netec_data_10,netec.data_10);
+	modify_field(meta.netec_data_11,netec.data_11);
+	modify_field(meta.netec_data_12,netec.data_12);
+	modify_field(meta.netec_data_13,netec.data_13);
+	modify_field(meta.netec_data_14,netec.data_14);
+	modify_field(meta.netec_data_15,netec.data_15);
 	modify_field(meta.netec_index,netec.index);
-	modify_field(meta.cksum_compensate,0xc);
+	modify_field(meta.cksum_compensate,udp.length_);//The udp.length_ field mysteriously does not take affect.
 }
 
 
@@ -172,13 +214,14 @@ table t_send_res{
 action a_send_res(){
 	modify_field(udp.dstPort,20001);
 	//subtract_from_field(udp.srcPort,meta.cksum_compensate);
-	modify_field(netec.data,meta.res);
+	modify_field(netec.data_15,meta.res);
 	modify_field(ig_intr_md_for_tm.ucast_egress_port,136);
 	modify_field(ipv4.identification,meta.cksum_compensate);
 	
 	//modify_field_with_hash_based_offset(udp.checksum,0,l4_with_netec_checksum, 65536);
 
 }
+
 
 control ingress {
 	/*
@@ -189,7 +232,8 @@ control ingress {
 	*/
 
 	if(valid(netec)){
-		apply(t_xor);
+		//apply(t_xor);
+		xor();
 		apply(t_finish);
 		if(meta.flag_finish == 1){
 			apply(t_send_res);

@@ -22,7 +22,9 @@ import pal_rpc
 import random
 import sys
 import time
-import unittest from qy.p4_pd_rpc.ttypes import *
+import unittest
+
+from netec.p4_pd_rpc.ttypes import *
 from pltfm_pm_rpc.ttypes import *
 from pal_rpc.ttypes import *
 from ptf import config
@@ -71,7 +73,7 @@ def set_lag_map(indicies):
 class L2Test(pd_base_tests.ThriftInterfaceDataPlane):
     def __init__(self):
         pd_base_tests.ThriftInterfaceDataPlane.__init__(self,
-                                                        ["qy"])
+                                                        ["netec"])
 
     # The setUp() method is used to prepare the test fixture. Typically
     # you would use it to establich connection to the Thrift server.
@@ -85,7 +87,8 @@ class L2Test(pd_base_tests.ThriftInterfaceDataPlane):
         pd_base_tests.ThriftInterfaceDataPlane.setUp(self)
         self.sess_hdl = self.conn_mgr.client_init()
         self.dev_tgt = DevTarget_t(0, hex_to_i16(0xFFFF))
-        self.devPorts = [
+        self.devPorts = []
+
         self.platform_type = "mavericks"
         board_type = self.pltfm_pm.pltfm_pm_board_type_get()
         if re.search("0x0234|0x1234|0x4234|0x5234", hex(board_type)):
@@ -117,25 +120,25 @@ class L2Test(pd_base_tests.ThriftInterfaceDataPlane):
             pass
         '''
     	self.client.t_modify_ip_table_add_with_a_modify_ip(self.sess_hdl,self.dev_tgt, 
-                                        qy_t_modify_ip_match_spec_t(eg_intr_md_egress_port=136),   
-                                        qy_a_modify_ip_action_spec_t(action_ip=ipv4Addr_to_i32("10.0.0.3"),
+                                        netec_t_modify_ip_match_spec_t(eg_intr_md_egress_port=136),   
+                                        netec_a_modify_ip_action_spec_t(action_ip=ipv4Addr_to_i32("10.0.0.3"),
                                                                      action_mac=macAddr_to_string("68:91:d0:61:12:3a")))       
     	self.client.t_modify_ip_table_add_with_a_modify_ip(self.sess_hdl,self.dev_tgt, 
-                                        qy_t_modify_ip_match_spec_t(eg_intr_md_egress_port=136),   
-                                        qy_a_modify_ip_action_spec_t(action_ip=ipv4Addr_to_i32("10.0.0.3"),
+                                        netec_t_modify_ip_match_spec_t(eg_intr_md_egress_port=136),   
+                                        netec_a_modify_ip_action_spec_t(action_ip=ipv4Addr_to_i32("10.0.0.3"),
                                                                      action_mac=macAddr_to_string("68:91:d0:61:12:3a")))       
         self.client.t_modify_ip_table_add_with_a_modify_ip(self.sess_hdl,self.dev_tgt, 
-                                        qy_t_modify_ip_match_spec_t(eg_intr_md_egress_port=152),   
-                                        qy_a_modify_ip_action_spec_t(action_ip=ipv4Addr_to_i32("10.0.0.10"),
+                                        netec_t_modify_ip_match_spec_t(eg_intr_md_egress_port=152),   
+                                        netec_a_modify_ip_action_spec_t(action_ip=ipv4Addr_to_i32("10.0.0.10"),
                                                                      action_mac=macAddr_to_string("68:91:d0:61:12:4b")))                        
         '''
         self.client.t_modify_ip_table_add_with_a_modify_ip(self.sess_hdl,self.dev_tgt, 
-                                        qy_t_modify_ip_match_spec_t(eg_intr_md_egress_port=136),   
-                                        qy_a_modify_ip_action_spec_t(action_ip=ipv4Addr_to_i32("10.0.0.3"),
-                                                                     action_mac=macAddr_to_string("68:91:d0:61:b4:c4")))
+                                        netec_t_modify_ip_match_spec_t(eg_intr_md_egress_port=136),   
+                                        netec_a_modify_ip_action_spec_t(action_ip=ipv4Addr_to_i32("10.0.0.3"),
+                                                                  action_mac=macAddr_to_string("68:91:d0:61:b4:c4")))
     	self.conn_mgr.complete_operations(self.sess_hdl)
         print "Configuring Mcast"
-
+    
         mc_sess_hdl = self.mc.mc_create_session()
         mgrp_hdl = self.mc.mc_mgrp_create(mc_sess_hdl, 0, 666)
         l1_hdl1 = self.mc.mc_node_create(mc_sess_hdl, 0, 1, set_port_map([128]), set_lag_map([]))
@@ -148,7 +151,6 @@ class L2Test(pd_base_tests.ThriftInterfaceDataPlane):
         self.mc.mc_associate_node(mc_sess_hdl, 0, mgrp_hdl, l1_hdl3, 0, 0)
         self.mc.mc_associate_node(mc_sess_hdl, 0, mgrp_hdl, l1_hdl4, 0, 0)
         self.mc.mc_complete_operations(mc_sess_hdl)
-
 
     	print "Finish Configuring Mcast"
 

@@ -340,3 +340,79 @@ control xor {
      
 }
     
+
+action fill_netec_fields(){
+    
+
+    modify_field(netec.data_0,meta.netec_res_0);
+     
+    modify_field(netec.data_1,meta.netec_res_1);
+     
+    modify_field(netec.data_2,meta.netec_res_2);
+     
+    modify_field(netec.data_3,meta.netec_res_3);
+     
+    modify_field(netec.data_4,meta.netec_res_4);
+     
+    modify_field(netec.data_5,meta.netec_res_5);
+     
+    modify_field(netec.data_6,meta.netec_res_6);
+     
+    modify_field(netec.data_7,meta.netec_res_7);
+     
+    modify_field(netec.data_8,meta.netec_res_8);
+     
+    modify_field(netec.data_9,meta.netec_res_9);
+     
+    modify_field(netec.data_10,meta.netec_res_10);
+     
+    modify_field(netec.data_11,meta.netec_res_11);
+     
+    modify_field(netec.data_12,meta.netec_res_12);
+     
+    modify_field(netec.data_13,meta.netec_res_13);
+     
+    modify_field(netec.data_14,meta.netec_res_14);
+     
+    modify_field(netec.data_15,meta.netec_res_15);
+     
+}
+    
+
+action fill_meta_netec_fields(){
+    
+
+    modify_field(meta.netec_data_0,meta.netec_res_0);
+     
+    modify_field(meta.netec_data_1,meta.netec_res_1);
+     
+    modify_field(meta.netec_data_2,meta.netec_res_2);
+     
+    modify_field(meta.netec_data_3,meta.netec_res_3);
+     
+    modify_field(meta.netec_data_4,meta.netec_res_4);
+     
+    modify_field(meta.netec_data_5,meta.netec_res_5);
+     
+    modify_field(meta.netec_data_6,meta.netec_res_6);
+     
+    modify_field(meta.netec_data_7,meta.netec_res_7);
+     
+    modify_field(meta.netec_data_8,meta.netec_res_8);
+     
+    modify_field(meta.netec_data_9,meta.netec_res_9);
+     
+    modify_field(meta.netec_data_10,meta.netec_res_10);
+     
+    modify_field(meta.netec_data_11,meta.netec_res_11);
+     
+    modify_field(meta.netec_data_12,meta.netec_res_12);
+     
+    modify_field(meta.netec_data_13,meta.netec_res_13);
+     
+    modify_field(meta.netec_data_14,meta.netec_res_14);
+     
+    modify_field(meta.netec_data_15,meta.netec_res_15);
+     
+}
+    

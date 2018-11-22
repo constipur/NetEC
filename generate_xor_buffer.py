@@ -36,8 +36,33 @@ control xor {
 }
     """
 
+    print """
+action fill_netec_fields(){
+    """
+    for i in range(count):
+        s = """
+    modify_field(netec.data_%s,meta.netec_res_%s);
+    """ % (i,i)
+        print s,
+    print """
+}
+    """
+
+    print """
+action fill_meta_netec_fields(){
+    """
+    for i in range(count):
+        s = """
+    modify_field(meta.netec_data_%s,meta.netec_res_%s);
+    """ % (i,i)
+        print s,
+    print """
+}
+    """
+
+
 
 
 if __name__ == '__main__':
-    main();
+    main()
 

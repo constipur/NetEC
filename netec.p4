@@ -82,22 +82,22 @@ field_list l4_with_netec_list {
 	udp.dstPort; 
 	udp.length_;
 	meta.netec_index;
-	meta.netec_data_0;
-	meta.netec_data_1;
-	meta.netec_data_2;
-	meta.netec_data_3;
-	meta.netec_data_4;
-	meta.netec_data_5;
-	meta.netec_data_6;
-	meta.netec_data_7;
-	meta.netec_data_8;
-	meta.netec_data_9;
-	meta.netec_data_10;
-	meta.netec_data_11;
-	meta.netec_data_12;
-	meta.netec_data_13;
-	meta.netec_data_14;
-	meta.netec_data_15;
+	meta.netec_res_0;
+	meta.netec_res_1;
+	meta.netec_res_2;
+	meta.netec_res_3;
+	meta.netec_res_4;
+	meta.netec_res_5;
+	meta.netec_res_6;
+	meta.netec_res_7;
+	meta.netec_res_8;
+	meta.netec_res_9;
+	meta.netec_res_10;
+	meta.netec_res_11;
+	meta.netec_res_12;
+	meta.netec_res_13;
+	meta.netec_res_14;
+	meta.netec_res_15;
 	meta.cksum_compensate;
 }
 field_list_calculation l4_with_netec_checksum {
@@ -184,23 +184,8 @@ table t_cksum_compensate{
 	default_action : a_cksum_compensate();
 }
 action a_cksum_compensate(){
+	//fill_meta_netec_fields();
 	modify_field(meta.l4_proto,ipv4.protocol);
-	modify_field(meta.netec_data_0,netec.data_0);
-	modify_field(meta.netec_data_1,netec.data_1);
-	modify_field(meta.netec_data_2,netec.data_2);
-	modify_field(meta.netec_data_3,netec.data_3);
-	modify_field(meta.netec_data_4,netec.data_4);
-	modify_field(meta.netec_data_5,netec.data_5);
-	modify_field(meta.netec_data_6,netec.data_6);
-	modify_field(meta.netec_data_7,netec.data_7);
-	modify_field(meta.netec_data_8,netec.data_8);
-	modify_field(meta.netec_data_9,netec.data_9);
-	modify_field(meta.netec_data_10,netec.data_10);
-	modify_field(meta.netec_data_11,netec.data_11);
-	modify_field(meta.netec_data_12,netec.data_12);
-	modify_field(meta.netec_data_13,netec.data_13);
-	modify_field(meta.netec_data_14,netec.data_14);
-	modify_field(meta.netec_data_15,netec.data_15);
 	modify_field(meta.netec_index,netec.index);
 	modify_field(meta.cksum_compensate,udp.length_);//The udp.length_ field mysteriously does not take affect.
 }
@@ -213,13 +198,8 @@ table t_send_res{
 }
 action a_send_res(){
 	modify_field(udp.dstPort,20001);
-	//subtract_from_field(udp.srcPort,meta.cksum_compensate);
-	modify_field(netec.data_15,meta.res);
 	modify_field(ig_intr_md_for_tm.ucast_egress_port,136);
-	modify_field(ipv4.identification,meta.cksum_compensate);
-	
-	//modify_field_with_hash_based_offset(udp.checksum,0,l4_with_netec_checksum, 65536);
-
+	fill_netec_fields();
 }
 
 

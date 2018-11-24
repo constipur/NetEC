@@ -161,7 +161,7 @@ table t_finish{
 }
 blackbox stateful_alu s_finish{
 	reg : r_finish;
-	condition_lo : register_lo < 1;
+	condition_lo : register_lo < 2;
 	update_lo_1_predicate : condition_lo;
 	update_lo_1_value : register_lo + 1;
 	update_lo_2_predicate: not condition_lo;

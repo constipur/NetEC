@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "jerasure.h"
 #include "reed_sol.h"
-
+#include "cauchy.h"
 #include "gf_complete.h"
 #include "gf_rand.h"
 #include "gf_method.h"
@@ -32,25 +32,20 @@ void open_files(){
 
 void read_data(){
     blue = (char*)malloc(sizeof(char)*size);
-    fgets(blue,size,fp_blue);
-    printf("blue: %d ",blue[0]);
-    printf("%d ",blue[1]);
-    printf("%d \n\n",char2short(blue[0],blue[1]));
+    fread(blue,sizeof(char),size,fp_blue);
+    //fgets(blue,size,fp_blue);
+
     orange = (char*)malloc(sizeof(char)*size);
-    fgets(orange,size,fp_orange);
-    printf("orange: %d ",orange[0]);
-    printf("%d ",orange[1]);
-    printf("%d \n\n",char2short(orange[0],orange[1]));
+    fread(orange,sizeof(char),size,fp_orange);
+    //fgets(orange,size,fp_orange);
 
     pink = (char*)malloc(sizeof(char)*size);
-    fgets(pink,size,fp_pink);
-    printf("pink: %d ",pink[0]);
-    printf("%d ",pink[1]);
-    printf("%d \n\n",char2short(pink[0],pink[1]));
+    fread(pink,sizeof(char),size,fp_pink);
+    //fgets(pink,size,fp_pink);
 }
 void prepare_ec(){
-    matrix = reed_sol_vandermonde_coding_matrix(k,m,w);
-
+    //matrix = reed_sol_vandermonde_coding_matrix(k,m,w);
+    matrix = cauchy_original_coding_matrix(k,m,w);
     data = (char **)malloc(sizeof(char*)*k);
 	coding = (char **)malloc(sizeof(char*)*m);
 	recon = (char **)malloc(sizeof(char*)*k);
@@ -155,9 +150,9 @@ int main(int argc, char **argv){
         coding[2][i] = (char)(res >> 8);
         coding[2][i+1] = (char)(res & 0xFF);
     }
-    fwrite(coding[0],sizeof(char),size,fp_coding1); 
-    fwrite(coding[1],sizeof(char),size,fp_coding2); 
-    fwrite(coding[2],sizeof(char),size,fp_coding3); 
+    // fwrite(coding[0],sizeof(char),size,fp_coding1); 
+    // fwrite(coding[1],sizeof(char),size,fp_coding2); 
+    // fwrite(coding[2],sizeof(char),size,fp_coding3); 
     
    
 
@@ -166,9 +161,10 @@ int main(int argc, char **argv){
     jerasure_print_matrix(matrix,k,k,w);
     int* decoding_matrix = malloc(sizeof(int)*k*k);
     int* dm_ids = malloc(sizeof(int)*k);
-    //jerasure_invert_matrix(matrix,decoding_matrix,k,w);
-    jerasure_make_decoding_matrix(k,m,w,matrix,erased,decoding_matrix,dm_ids);
+    jerasure_invert_matrix(matrix,decoding_matrix,k,w);
+    //jerasure_make_decoding_matrix(k,m,w,matrix,erased,decoding_matrix,dm_ids);
     jerasure_print_matrix(decoding_matrix,k,k,w);
+
     /*
     int* src_id = malloc(sizeof(int)*k);
     src_id[0] = 3;
@@ -178,33 +174,27 @@ int main(int argc, char **argv){
     */
     //manual decode
     for(i = 0;i < size;i+=2){
-        /* 
-        printf("%d ", coding[0][i]);
-        printf("%d ", coding[0][i+1]);
-        printf("%d \n",char2short(coding[0][i],coding[0][i+1]));
-        printf("%d ", coding[1][i]);
-        printf("%d ", coding[1][i+1]);
-        printf("%d \n",char2short(coding[1][i],coding[1][i+1]));
-        printf("%d ", coding[2][i]);
-        printf("%d ", coding[2][i+1]);
-        
-        printf("%d \n\n",char2short(coding[2][i],coding[2][i+1]));
-        */ 
-        uint16_t res = mult(decoding_matrix[0],char2short(coding[0][i],coding[0][i+1])) ^ 
-        mult(decoding_matrix[1],char2short(coding[1][i],coding[1][i+1])) ^ 
-        mult(decoding_matrix[2],char2short(coding[2][i],coding[2][i+1])); 
+        // printf("%d ", coding[0][i]);
+        // printf("%d ", coding[0][i+1]);
+        // printf("%d \n",char2short(coding[0][i],coding[0][i+1]));
+        // printf("%d ", coding[1][i]);
+        // printf("%d ", coding[1][i+1]);
+        // printf("%d \n",char2short(coding[1][i],coding[1][i+1]));
+        // printf("%d ", coding[2][i]);
+        // printf("%d ", coding[2][i+1]);
+        // printf("%d \n\n",char2short(coding[2][i],coding[2][i+1]));
+
+        uint16_t res = mult(decoding_matrix[3],char2short(coding[0][i],coding[0][i+1])) ^ 
+        mult(decoding_matrix[4],char2short(coding[1][i],coding[1][i+1])) ^ 
+        mult(decoding_matrix[5],char2short(coding[2][i],coding[2][i+1])); 
         recon[0][i] = (char)(res >> 8);
         recon[0][i+1] =  (char)(res & 0xFF);
-        /* 
-        printf("%d ", recon[0][i]);
-        printf("%d \n", blue[i]);
-        printf("%d ", recon[0][i+1]);
-        printf("%d \n\n", blue[i+1]);
-        */
-        
-        
+        // printf("%d ", recon[0][i]);
+        // printf("%d ", orange[i]);
+        // printf("%d ", recon[0][i+1]);
+        // printf("%d \n", orange[i+1]);
     }
-    fwrite(recon[0],sizeof(char),size,fp_coding1);
+    fwrite(recon[0],sizeof(char),size,fp_coding2);
 
 
     uint16_t res = mult(1,16973) ^ mult(24578,16973) ^ mult(40964,16973);
@@ -213,7 +203,7 @@ int main(int argc, char **argv){
     printf("res: %d\n",(char)(res & 0xFF));
     char a = 12;
     char b = 167;
-    printf("res: %d\n",char2short(a,b));
+    printf("re: %d\n",char2short(a,b));
 
     //write_files();
     close_files();

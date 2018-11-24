@@ -6,7 +6,7 @@ def main():
         s = """
 // AUTOGEN
 register r_xor_%s{
-	width : 8;
+	width : 16;
 	instance_count : 65536;
 }
 blackbox stateful_alu s_xor_%s{
@@ -59,6 +59,7 @@ action fill_meta_netec_fields(){
     print """
 }
     """
+
 
 
 

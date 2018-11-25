@@ -1,13 +1,13 @@
 # Autogen xor buffer tables and related modules
 
 def main():
-    count = 16
+    count = 1
     for i in range(count):
         s = """
 // AUTOGEN
 register r_xor_%s{
 	width : 16;
-	instance_count : 65536;
+	instance_count : 262144;
 }
 blackbox stateful_alu s_xor_%s{
 	reg : r_xor_%s;
@@ -42,18 +42,6 @@ action fill_netec_fields(){
     for i in range(count):
         s = """
     modify_field(netec.data_%s,meta.netec_res_%s);
-    """ % (i,i)
-        print s,
-    print """
-}
-    """
-
-    print """
-action fill_meta_netec_fields(){
-    """
-    for i in range(count):
-        s = """
-    modify_field(meta.netec_data_%s,meta.netec_res_%s);
     """ % (i,i)
         print s,
     print """

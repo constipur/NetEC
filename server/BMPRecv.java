@@ -16,31 +16,29 @@ public class BMPRecv{
         InetAddress bindIP = InetAddress.getByName(args[0]);
         DatagramSocket socket = new DatagramSocket(20001,bindIP);
 
-        byte[] image = new byte[998574];
+        byte[] image = new byte[80454];
 
-		byte[] buf = new byte[34];
+		byte[] buf = new byte[4];
 		DatagramPacket packet = new DatagramPacket(buf,buf.length);
         int count = 0;
         int pos = 0;
-		while(count < 31206){
+		while(count < 40227){
+
             socket.receive(packet);
             count++;
             try{
                 byte[] bytes = packet.getData();
-                if(bytes.length < 34) break;
-                System.arraycopy(bytes, 2, image, pos, 32); 
-                pos += 32;
+                System.arraycopy(bytes, 2, image, pos, 2); 
+                pos += 2;
             }catch(Exception e){
                 e.printStackTrace();
             }
-            count++;
-			//System.out.println(count);
+            //System.out.println(count);
         } 
-        
         try{
             OutputStream out = new FileOutputStream("recon.bmp");
             out.write(image);
-            out.flush();
+            //out.flush();
             out.close();
         }catch(Exception e){
             e.printStackTrace();

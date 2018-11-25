@@ -9,7 +9,7 @@
 
 int k,m,w;
 FILE* fp_blue,*fp_orange,*fp_pink,*fp_coding1,*fp_coding2,*fp_coding3;
-int size = 998574;
+int size = 80454;
 char* blue,*orange,*pink;
 char** data;
 char** coding;
@@ -44,8 +44,8 @@ void read_data(){
     //fgets(pink,size,fp_pink);
 }
 void prepare_ec(){
-    //matrix = reed_sol_vandermonde_coding_matrix(k,m,w);
-    matrix = cauchy_original_coding_matrix(k,m,w);
+    matrix = reed_sol_vandermonde_coding_matrix(k,m,w);
+    //matrix = cauchy_original_coding_matrix(k,m,w);
     data = (char **)malloc(sizeof(char*)*k);
 	coding = (char **)malloc(sizeof(char*)*m);
 	recon = (char **)malloc(sizeof(char*)*k);
@@ -105,7 +105,12 @@ int main(int argc, char **argv){
 
     log_table = gf_w16_get_log_table(&gf);
     ilog_table = gf_w16_get_mult_alog_table(&gf);
-
+    printf("1: %d\n",log_table[48563]);
+    printf("2: %d\n",log_table[48564]);
+    printf("3: %d\n\n",log_table[6]);
+    printf("1: %d\n",log_table[55005]);
+    printf("2: %d\n",log_table[55000]);
+    printf("3: %d\n\n",log_table[5]);
 
     open_files();
     read_data();
@@ -150,9 +155,9 @@ int main(int argc, char **argv){
         coding[2][i] = (char)(res >> 8);
         coding[2][i+1] = (char)(res & 0xFF);
     }
-    // fwrite(coding[0],sizeof(char),size,fp_coding1); 
-    // fwrite(coding[1],sizeof(char),size,fp_coding2); 
-    // fwrite(coding[2],sizeof(char),size,fp_coding3); 
+    //fwrite(coding[0],sizeof(char),size,fp_coding1); 
+    //fwrite(coding[1],sizeof(char),size,fp_coding2); 
+    //fwrite(coding[2],sizeof(char),size,fp_coding3); 
     
    
 
@@ -184,9 +189,9 @@ int main(int argc, char **argv){
         // printf("%d ", coding[2][i+1]);
         // printf("%d \n\n",char2short(coding[2][i],coding[2][i+1]));
 
-        uint16_t res = mult(decoding_matrix[3],char2short(coding[0][i],coding[0][i+1])) ^ 
-        mult(decoding_matrix[4],char2short(coding[1][i],coding[1][i+1])) ^ 
-        mult(decoding_matrix[5],char2short(coding[2][i],coding[2][i+1])); 
+        uint16_t res = mult(decoding_matrix[0],char2short(coding[0][i],coding[0][i+1])) ^ 
+        mult(decoding_matrix[1],char2short(coding[1][i],coding[1][i+1])) ^ 
+        mult(decoding_matrix[2],char2short(coding[2][i],coding[2][i+1])); 
         recon[0][i] = (char)(res >> 8);
         recon[0][i+1] =  (char)(res & 0xFF);
         // printf("%d ", recon[0][i]);
@@ -194,7 +199,7 @@ int main(int argc, char **argv){
         // printf("%d ", recon[0][i+1]);
         // printf("%d \n", orange[i+1]);
     }
-    fwrite(recon[0],sizeof(char),size,fp_coding2);
+    //fwrite(recon[0],sizeof(char),size,fp_coding1);
 
 
     uint16_t res = mult(1,16973) ^ mult(24578,16973) ^ mult(40964,16973);
@@ -205,7 +210,7 @@ int main(int argc, char **argv){
     char b = 167;
     printf("re: %d\n",char2short(a,b));
 
-    //write_files();
+    write_files();
     close_files();
     return 0;
 }

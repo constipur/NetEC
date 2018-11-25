@@ -136,7 +136,43 @@ class L2Test(pd_base_tests.ThriftInterfaceDataPlane):
                                         netec_t_modify_ip_match_spec_t(eg_intr_md_egress_port=136),   
                                         netec_a_modify_ip_action_spec_t(action_ip=ipv4Addr_to_i32("10.0.0.3"),
                                                                   action_mac=macAddr_to_string("68:91:d0:61:b4:c4")))
+        self.client.t_get_coeff_table_add_with_a_get_coeff(self.sess_hdl,self.dev_tgt,
+                                        netec_t_get_coeff_match_spec_t(ipv4_srcAddr=ipv4Addr_to_i32("10.0.0.4")),
+                                        netec_a_get_coeff_action_spec_t(action_coeff=49830))
+
+        self.client.t_get_coeff_table_add_with_a_get_coeff(self.sess_hdl,self.dev_tgt,
+                                        netec_t_get_coeff_match_spec_t(ipv4_srcAddr=ipv4Addr_to_i32("10.0.0.5")),
+                                        netec_a_get_coeff_action_spec_t(action_coeff=33890))
+        self.client.t_get_coeff_table_add_with_a_get_coeff(self.sess_hdl,self.dev_tgt,
+                                        netec_t_get_coeff_match_spec_t(ipv4_srcAddr=ipv4Addr_to_i32("10.0.0.6")),
+                                        netec_a_get_coeff_action_spec_t(action_coeff=33653))
+
+        f = open("/root/bf-sde/bf-sde-8.2.0/NetEC/ctrl/log_tables.txt",'r')
+        lines = f.readlines()
+        for i in range(0,65536):
+            a = int(lines[i])
+            if a > 32767:
+                self.client.register_write_r_log_table(self.sess_hdl,self.dev_tgt,i,a-65536)
+            else:
+                self.client.register_write_r_log_table(self.sess_hdl,self.dev_tgt,i,a)
+
+        for i in range(65536,196608):
+            a = int(lines[i])
+            if a > 32767:
+                self.client.register_write_r_ilog_table(self.sess_hdl,self.dev_tgt,i-65536,a-65536)
+            else:
+                self.client.register_write_r_ilog_table(self.sess_hdl,self.dev_tgt,i-65536,a)
+            
+
+
     	self.conn_mgr.complete_operations(self.sess_hdl)
+
+
+
+
+
+
+
         print "Configuring Mcast"
     
         mc_sess_hdl = self.mc.mc_create_session()

@@ -33,41 +33,45 @@ header_type custom_metadata_t {
 		l4_proto:16;
 		ttl_length:16;
 		payload_csum : 16;
-		
+		coeff: 32;
+		temp : 32;
+		to_query : 16;
+
 		netec_index : 16;
-		netec_data_0 : 16;
-		netec_data_1 : 16;
-		netec_data_2 : 16;
-		netec_data_3 : 16;
-		netec_data_4 : 16;
-		netec_data_5 : 16;
-		netec_data_6 : 16;
-		netec_data_7 : 16;
-		netec_data_8 : 16;
-		netec_data_9 : 16;
-		netec_data_10 : 16;
-		netec_data_11 : 16;
-		netec_data_12: 16;
-		netec_data_13 : 16;
-		netec_data_14 : 16;
-		netec_data_15 : 16;
+		// netec_data_0 : 16;
+		// netec_data_1 : 16;
+		// netec_data_2 : 16;
+		// netec_data_3 : 16;
+		// netec_data_4 : 16;
+		// netec_data_5 : 16;
+		// netec_data_6 : 16;
+		// netec_data_7 : 16;
+		// netec_data_8 : 16;
+		// netec_data_9 : 16;
+		// netec_data_10 : 16;
+		// netec_data_11 : 16;
+		// netec_data_12: 16;
+		// netec_data_13 : 16;
+		// netec_data_14 : 16;
+		// netec_data_15 : 16;
+
 
 		netec_res_0 : 16;
-		netec_res_1 : 16;
-		netec_res_2 : 16;
-		netec_res_3 : 16;
-		netec_res_4 : 16;
-		netec_res_5 : 16;
-		netec_res_6 : 16;
-		netec_res_7 : 16;
-		netec_res_8 : 16;
-		netec_res_9 : 16;
-		netec_res_10 : 16;
-		netec_res_11 : 16;
-		netec_res_12: 16;
-		netec_res_13 : 16;
-		netec_res_14 : 16;
-		netec_res_15 : 16;
+		// netec_res_1 : 16;
+		// netec_res_2 : 16;
+		// netec_res_3 : 16;
+		// netec_res_4 : 16;
+		// netec_res_5 : 16;
+		// netec_res_6 : 16;
+		// netec_res_7 : 16;
+		// netec_res_8 : 16;
+		// netec_res_9 : 16;
+		// netec_res_10 : 16;
+		// netec_res_11 : 16;
+		// netec_res_12: 16;
+		// netec_res_13 : 16;
+		// netec_res_14 : 16;
+		// netec_res_15 : 16;
 	}
 }
 metadata custom_metadata_t meta;
@@ -83,21 +87,21 @@ field_list l4_with_netec_list {
 	udp.length_;
 	meta.netec_index;
 	meta.netec_res_0;
-	meta.netec_res_1;
-	meta.netec_res_2;
-	meta.netec_res_3;
-	meta.netec_res_4;
-	meta.netec_res_5;
-	meta.netec_res_6;
-	meta.netec_res_7;
-	meta.netec_res_8;
-	meta.netec_res_9;
-	meta.netec_res_10;
-	meta.netec_res_11;
-	meta.netec_res_12;
-	meta.netec_res_13;
-	meta.netec_res_14;
-	meta.netec_res_15;
+	// meta.netec_res_1;
+	// meta.netec_res_2;
+	// meta.netec_res_3;
+	// meta.netec_res_4;
+	// meta.netec_res_5;
+	// meta.netec_res_6;
+	// meta.netec_res_7;
+	// meta.netec_res_8;
+	// meta.netec_res_9;
+	// meta.netec_res_10;
+	// meta.netec_res_11;
+	// meta.netec_res_12;
+	// meta.netec_res_13;
+	// meta.netec_res_14;
+	// meta.netec_res_15;
 	meta.cksum_compensate;
 }
 field_list_calculation l4_with_netec_checksum {
@@ -202,6 +206,98 @@ action a_send_res(){
 	fill_netec_fields();
 }
 
+//the coeff are logged
+table t_get_coeff{
+	reads {
+		ipv4.srcAddr:exact;
+	}
+	actions{
+		a_get_coeff;nop;
+	}
+	default_action:nop();
+}
+
+action a_get_coeff(coeff){
+	modify_field(meta.coeff,coeff);
+	modify_field(ipv4.diffserv,coeff);
+}
+
+table t_get_log{
+	actions{
+		a_get_log;
+	}
+	default_action:a_get_log;
+}
+register r_log_table{
+	width : 16;
+	instance_count : 65536;
+}
+
+blackbox stateful_alu s_log_table{
+	reg : r_log_table;
+	update_lo_1_value:register_lo;
+	output_value : register_lo;
+	output_dst : meta.temp;
+}
+action a_get_log(){
+	s_log_table.execute_stateful_alu(netec.data_0);
+}
+
+table t_record{
+	actions{
+		a_record;
+	}
+	default_action:a_record();
+}
+
+action a_record(){
+	modify_field(ipv4.identification,netec.data_0);
+}
+
+table t_log_zero{
+	actions{
+		a_log_zero;
+	}
+	default_action:a_log_zero();
+}
+
+action a_log_zero(){
+	modify_field(meta.temp,0);
+}
+
+
+table t_log_add{
+	actions{
+		a_log_add;
+	}
+	default_action:a_log_add();
+}
+action a_log_add(){
+	add_to_field(meta.temp,meta.coeff);
+}
+
+
+table t_get_ilog{
+	actions{
+		a_get_ilog;
+	}
+	default_action:a_get_ilog;
+}
+register r_ilog_table{
+	width : 16;
+	instance_count : 131072;
+}
+
+blackbox stateful_alu s_ilog_table{
+	reg : r_ilog_table;
+	update_lo_1_value:register_lo;
+	output_value : register_lo;
+	output_dst : netec.data_0;
+}
+action a_get_ilog(){
+	s_ilog_table.execute_stateful_alu(meta.temp);
+}
+
 
 control ingress {
 	/*
@@ -212,7 +308,13 @@ control ingress {
 	*/
 
 	if(valid(netec)){
-		//apply(t_xor);
+		apply(t_get_coeff);
+		if(netec.data_0 != 0){
+			apply(t_get_log);
+			apply(t_log_add);
+			apply(t_get_ilog);
+			apply(t_record);
+		}
 		xor();
 		apply(t_finish);
 		if(meta.flag_finish == 1){

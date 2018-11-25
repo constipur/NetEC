@@ -38,21 +38,21 @@ header_type netec_t{
 	fields {
 		index : 16 ;
 		data_0 : 16;
-		data_1 : 16;
-		data_2 : 16;
-		data_3 : 16;
-		data_4 : 16;
-		data_5 : 16;
-		data_6 : 16;
-		data_7 : 16;
-		data_8 : 16;
-		data_9 : 16;
-		data_10 : 16;
-		data_11 : 16;
-		data_12 : 16;
-		data_13 : 16;
-		data_14 : 16;
-		data_15 : 16;
+		// data_2 : 16;
+		// data_1 : 16;
+		// data_3 : 16;
+		// data_4 : 16;
+		// data_5 : 16;
+		// data_6 : 16;
+		// data_7 : 16;
+		// data_8 : 16;
+		// data_9 : 16;
+		// data_10 : 16;
+		// data_11 : 16;
+		// data_12 : 16;
+		// data_13 : 16;
+		// data_14 : 16;
+		// data_15 : 16;
 	}
 }
 header netec_t netec;

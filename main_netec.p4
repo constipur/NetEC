@@ -43,83 +43,12 @@ header_type custom_metadata_t {
 metadata custom_metadata_t meta;
 metadata netec_meta_t netec_meta;
 
-/*
-field_list l4_with_netec_list {
-	ipv4.srcAddr;
-    ipv4.dstAddr;
-	meta.l4_proto;
-	udp.srcPort;
-	udp.dstPort; 
-	udp.length_;
-	netec_meta.index;
-	netec_meta.type_;
-	netec_meta.res_0;
-	netec_meta.res_1;
-	// meta.netec_res_2;
-	// meta.netec_res_3;
-	// meta.netec_res_4;
-	// meta.netec_res_5;
-	// meta.netec_res_6;
-	// meta.netec_res_7;
-	// meta.netec_res_8;
-	// meta.netec_res_9;
-	// meta.netec_res_10;
-	// meta.netec_res_11;
-	// meta.netec_res_12;
-	// meta.netec_res_13;
-	// meta.netec_res_14;
-	// meta.netec_res_15;
-	meta.cksum_compensate;
-}
-field_list_calculation l4_with_netec_checksum {
-    input {
-        l4_with_netec_list;
-    }
-    algorithm : csum16;
-    output_width : 16;
-}
-
-calculated_field udp.checksum  {
-	update l4_with_netec_checksum;
-}
-*/
-action set_egr(egress_spec) {
-    modify_field(ig_intr_md_for_tm.ucast_egress_port, egress_spec);
-}
-
 action nop() {
 }
 
 action _drop() {
     drop();
 }
-
-table forward {
-    reads {
-        ethernet.dstAddr : exact;
-    }
-    actions {
-        set_egr; nop;
-    }
-}
- 
-table bypass1 {
-	actions{bypass1_action;}
-	default_action : bypass1_action();
-}
-action bypass1_action(){
-	//modify_field(ig_intr_md_for_tm.mcast_grp_a, 666);
-	modify_field(ig_intr_md_for_tm.ucast_egress_port,136);
-}
-table bypass2 {
-	actions{bypass2_action;}
-	default_action : bypass2_action();
-}
-action bypass2_action(){
-	modify_field(ig_intr_md_for_tm.ucast_egress_port,128);
-	//modify_field(ig_intr_md_for_tm.mcast_grp_a, 666);
-}
-
 
 register r_finish{
 	width : 8;
@@ -130,6 +59,7 @@ table t_finish{
 	actions{a_finish;}
 	default_action : a_finish();
 }
+
 blackbox stateful_alu s_finish{
 	reg : r_finish;
 	condition_lo : register_lo < 2;
@@ -150,19 +80,17 @@ blackbox stateful_alu s_finish{
 action a_finish(){
 	s_finish.execute_stateful_alu(netec.index);
 }
+
 table t_cksum_compensate{
 	actions{a_cksum_compensate;}
 	default_action : a_cksum_compensate();
 }
 action a_cksum_compensate(){
-	//fill_meta_netec_fields();
 	modify_field(meta.l4_proto,ipv4.protocol);
 	modify_field(netec_meta.index,netec.index);
 	modify_field(netec_meta.type_,netec.type_);
 	modify_field(meta.cksum_compensate,udp.length_);//The udp.length_ field mysteriously does not take affect.
 }
-
-
 
 table t_send_res{
 	actions{a_send_res;}
@@ -193,27 +121,6 @@ action a_get_coeff(coeff){
 	modify_field(meta.index,netec.index);
 }
 
-table t_get_log{
-	actions{
-		a_get_log;
-	}
-	default_action:a_get_log;
-}
-register r_log_table{
-	width : 16;
-	instance_count : 65536;
-}
-
-blackbox stateful_alu s_log_table{
-	reg : r_log_table;
-	update_lo_1_value:register_lo;
-	output_value : register_lo;
-	output_dst : meta.temp;
-}
-action a_get_log(){
-	s_log_table.execute_stateful_alu(netec.data_0);
-}
-
 table t_record{
 	actions{
 		a_record;
@@ -224,41 +131,6 @@ action a_record(){
 	modify_field(ipv4.identification,netec_meta.temp_1);
 	//modify_field(ipv4.diffserv,netec_meta.temp_1);
 }
-
-
-
-table t_log_add{
-	actions{
-		a_log_add;
-	}
-	default_action:a_log_add();
-}
-action a_log_add(){
-	add_to_field(meta.temp,meta.coeff);
-}
-
-
-table t_get_ilog{
-	actions{
-		a_get_ilog;
-	}
-	default_action:a_get_ilog;
-}
-register r_ilog_table{
-	width : 16;
-	instance_count : 131072;
-}
-
-blackbox stateful_alu s_ilog_table{
-	reg : r_ilog_table;
-	update_lo_1_value:register_lo;
-	output_value : register_lo;
-	output_dst : netec_meta.temp;
-}
-action a_get_ilog(){
-	//s_ilog_table.i/_stateful_alu(meta.temp);
-}
-
 
 
 control ingress {
@@ -310,7 +182,6 @@ action a_modify_ip(ip,mac){
 	modify_field(ipv4.dstAddr,ip);
 	modify_field(ethernet.dstAddr,mac);
 }
-
 
 control egress {
 	apply(t_modify_ip);

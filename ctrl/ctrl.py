@@ -118,20 +118,7 @@ class L2Test(pd_base_tests.ThriftInterfaceDataPlane):
                 self.conn_mgr.complete_operations(self.sess_hdl)
         except Exception as e:
             pass
-        '''
-    	self.client.t_modify_ip_table_add_with_a_modify_ip(self.sess_hdl,self.dev_tgt, 
-                                        netec_t_modify_ip_match_spec_t(eg_intr_md_egress_port=136),   
-                                        netec_a_modify_ip_action_spec_t(action_ip=ipv4Addr_to_i32("10.0.0.3"),
-                                                                     action_mac=macAddr_to_string("68:91:d0:61:12:3a")))       
-    	self.client.t_modify_ip_table_add_with_a_modify_ip(self.sess_hdl,self.dev_tgt, 
-                                        netec_t_modify_ip_match_spec_t(eg_intr_md_egress_port=136),   
-                                        netec_a_modify_ip_action_spec_t(action_ip=ipv4Addr_to_i32("10.0.0.3"),
-                                                                     action_mac=macAddr_to_string("68:91:d0:61:12:3a")))       
-        self.client.t_modify_ip_table_add_with_a_modify_ip(self.sess_hdl,self.dev_tgt, 
-                                        netec_t_modify_ip_match_spec_t(eg_intr_md_egress_port=152),   
-                                        netec_a_modify_ip_action_spec_t(action_ip=ipv4Addr_to_i32("10.0.0.10"),
-                                                                     action_mac=macAddr_to_string("68:91:d0:61:12:4b")))                        
-        '''
+        
         self.client.t_modify_ip_table_add_with_a_modify_ip(self.sess_hdl,self.dev_tgt, 
                                         netec_t_modify_ip_match_spec_t(eg_intr_md_egress_port=136),   
                                         netec_a_modify_ip_action_spec_t(action_ip=ipv4Addr_to_i32("10.0.0.3"),
@@ -147,67 +134,10 @@ class L2Test(pd_base_tests.ThriftInterfaceDataPlane):
                                         netec_t_get_coeff_match_spec_t(ipv4_srcAddr=ipv4Addr_to_i32("10.0.0.6")),
                                         netec_a_get_coeff_action_spec_t(action_coeff=49594))
         count = 8
-        """
-        self.client.t_log_add_0_table_add_with_a_log_mod_0(self.sess_hdl,self.dev_tgt,
-                                        netec_t_log_add_0_match_spec_t(netec_type_=2))
-        self.client.t_log_add_1_table_add_with_a_log_mod_1(self.sess_hdl,self.dev_tgt,
-                                        netec_t_log_add_1_match_spec_t(netec_type_=2))
-        self.client.t_log_add_2_table_add_with_a_log_mod_2(self.sess_hdl,self.dev_tgt,
-                                        netec_t_log_add_2_match_spec_t(netec_type_=2))
-        self.client.t_log_add_3_table_add_with_a_log_mod_3(self.sess_hdl,self.dev_tgt,
-                                        netec_t_log_add_3_match_spec_t(netec_type_=2))
-        self.client.t_log_add_4_table_add_with_a_log_mod_4(self.sess_hdl,self.dev_tgt,
-                                        netec_t_log_add_4_match_spec_t(netec_type_=2))
-        self.client.t_log_add_5_table_add_with_a_log_mod_5(self.sess_hdl,self.dev_tgt,
-                                        netec_t_log_add_5_match_spec_t(netec_type_=2))
-        self.client.t_log_add_6_table_add_with_a_log_mod_6(self.sess_hdl,self.dev_tgt,
-                                        netec_t_log_add_6_match_spec_t(netec_type_=2))
-        self.client.t_log_add_7_table_add_with_a_log_mod_7(self.sess_hdl,self.dev_tgt,
-                                        netec_t_log_add_7_match_spec_t(netec_type_=2))
-        """
         for i in range(count):
             getattr(self.client,"t_log_add_%s_table_add_with_a_log_mod_%s" %(i,i))(self.sess_hdl,self.dev_tgt,eval("netec_t_log_add_%s_match_spec_t" % (i))(netec_type_=2))
                                         
-                                                                        
-        """
-        f = open("/root/bf-sde/bf-sde-8.2.0/NetEC/ctrl/log_tables.txt",'r')
-        lines = f.readlines()
-        for i in range(0,65536):
-            a = int(lines[i])
-            if a > 32767:
-                self.client.register_write_r_log_table_0(self.sess_hdl,self.dev_tgt,i,a-65536)
-            else:
-                self.client.register_write_r_log_table_0(self.sess_hdl,self.dev_tgt,i,a)
-
-        for i in range(65536,196608):
-            a = int(lines[i])
-            if a > 32767:
-                self.client.register_write_r_ilog_table_0(self.sess_hdl,self.dev_tgt,i-65536,a-65536)
-            else:
-                self.client.register_write_r_ilog_table_0(self.sess_hdl,self.dev_tgt,i-65536,a)
-            
-        for i in range(0,65536):
-            a = int(lines[i])
-            if a > 32767:
-                self.client.register_write_r_log_table_1(self.sess_hdl,self.dev_tgt,i,a-65536)
-            else:
-                self.client.register_write_r_log_table_1(self.sess_hdl,self.dev_tgt,i,a)
-
-        for i in range(65536,196608):
-            a = int(lines[i])
-            if a > 32767:
-                self.client.register_write_r_ilog_table_1(self.sess_hdl,self.dev_tgt,i-65536,a-65536)
-            else:
-                self.client.register_write_r_ilog_table_1(self.sess_hdl,self.dev_tgt,i-65536,a)
-
-    	self.conn_mgr.complete_operations(self.sess_hdl)
-        """
-
-
-
-
-
-
+        
         print "Configuring Mcast"
     
         mc_sess_hdl = self.mc.mc_create_session()

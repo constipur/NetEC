@@ -33,7 +33,7 @@ header_type udp_t {
     }
 }
 header udp_t udp;
-
+/*
 header_type netec_t{
 	fields {
 		type_ : 16;
@@ -57,10 +57,9 @@ header_type netec_t{
 		// data_15 : 16;
 	}
 }
-@pragma pa_solitary ingress netec.data_0
-@pragma pa_solitary ingress netec.data_1
-header netec_t netec;
 
+header netec_t netec;
+*/
 
 header ipv4_t ipv4;
 

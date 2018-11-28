@@ -138,19 +138,35 @@ class L2Test(pd_base_tests.ThriftInterfaceDataPlane):
                                                                   action_mac=macAddr_to_string("68:91:d0:61:b4:c4")))
         self.client.t_get_coeff_table_add_with_a_get_coeff(self.sess_hdl,self.dev_tgt,
                                         netec_t_get_coeff_match_spec_t(ipv4_srcAddr=ipv4Addr_to_i32("10.0.0.4")),
-                                        netec_a_get_coeff_action_spec_t(action_coeff=49830))
+                                        netec_a_get_coeff_action_spec_t(action_coeff=237))
 
         self.client.t_get_coeff_table_add_with_a_get_coeff(self.sess_hdl,self.dev_tgt,
                                         netec_t_get_coeff_match_spec_t(ipv4_srcAddr=ipv4Addr_to_i32("10.0.0.5")),
-                                        netec_a_get_coeff_action_spec_t(action_coeff=33890))
+                                        netec_a_get_coeff_action_spec_t(action_coeff=33889))
         self.client.t_get_coeff_table_add_with_a_get_coeff(self.sess_hdl,self.dev_tgt,
                                         netec_t_get_coeff_match_spec_t(ipv4_srcAddr=ipv4Addr_to_i32("10.0.0.6")),
-                                        netec_a_get_coeff_action_spec_t(action_coeff=33653))
-        
+                                        netec_a_get_coeff_action_spec_t(action_coeff=49594))
+        count = 8
+        """
         self.client.t_log_add_0_table_add_with_a_log_mod_0(self.sess_hdl,self.dev_tgt,
                                         netec_t_log_add_0_match_spec_t(netec_type_=2))
         self.client.t_log_add_1_table_add_with_a_log_mod_1(self.sess_hdl,self.dev_tgt,
                                         netec_t_log_add_1_match_spec_t(netec_type_=2))
+        self.client.t_log_add_2_table_add_with_a_log_mod_2(self.sess_hdl,self.dev_tgt,
+                                        netec_t_log_add_2_match_spec_t(netec_type_=2))
+        self.client.t_log_add_3_table_add_with_a_log_mod_3(self.sess_hdl,self.dev_tgt,
+                                        netec_t_log_add_3_match_spec_t(netec_type_=2))
+        self.client.t_log_add_4_table_add_with_a_log_mod_4(self.sess_hdl,self.dev_tgt,
+                                        netec_t_log_add_4_match_spec_t(netec_type_=2))
+        self.client.t_log_add_5_table_add_with_a_log_mod_5(self.sess_hdl,self.dev_tgt,
+                                        netec_t_log_add_5_match_spec_t(netec_type_=2))
+        self.client.t_log_add_6_table_add_with_a_log_mod_6(self.sess_hdl,self.dev_tgt,
+                                        netec_t_log_add_6_match_spec_t(netec_type_=2))
+        self.client.t_log_add_7_table_add_with_a_log_mod_7(self.sess_hdl,self.dev_tgt,
+                                        netec_t_log_add_7_match_spec_t(netec_type_=2))
+        """
+        for i in range(count):
+            getattr(self.client,"t_log_add_%s_table_add_with_a_log_mod_%s" %(i,i))(self.sess_hdl,self.dev_tgt,eval("netec_t_log_add_%s_match_spec_t" % (i))(netec_type_=2))
                                         
                                                                         
         """

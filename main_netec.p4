@@ -43,7 +43,7 @@ header_type custom_metadata_t {
 metadata custom_metadata_t meta;
 metadata netec_meta_t netec_meta;
 
-
+/*
 field_list l4_with_netec_list {
 	ipv4.srcAddr;
     ipv4.dstAddr;
@@ -55,7 +55,6 @@ field_list l4_with_netec_list {
 	netec_meta.type_;
 	netec_meta.res_0;
 	netec_meta.res_1;
-	// meta.netec_res_1;
 	// meta.netec_res_2;
 	// meta.netec_res_3;
 	// meta.netec_res_4;
@@ -83,7 +82,7 @@ field_list_calculation l4_with_netec_checksum {
 calculated_field udp.checksum  {
 	update l4_with_netec_checksum;
 }
-
+*/
 action set_egr(egress_spec) {
     modify_field(ig_intr_md_for_tm.ucast_egress_port, egress_spec);
 }
@@ -103,7 +102,7 @@ table forward {
         set_egr; nop;
     }
 }
-
+ 
 table bypass1 {
 	actions{bypass1_action;}
 	default_action : bypass1_action();

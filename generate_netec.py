@@ -1,13 +1,57 @@
 # Autogen xor buffer tables and related modules
 
 def main():
-    count = 2
+    count = 8
+    print """
+header_type netec_t{
+	fields {
+		type_ : 16;
+		index : 32 ;
+    """,
+    for i in range(count):
+        print """
+		data_%s : 16;
+        """ % (i),
+    print """
+	}
+}
+header netec_t netec;
+    """,
+    print """
+field_list l4_with_netec_list {
+	ipv4.srcAddr;
+    ipv4.dstAddr;
+	meta.l4_proto;
+	udp.srcPort;
+	udp.dstPort; 
+	udp.length_;
+	netec_meta.index;
+	netec_meta.type_;
+    """,
+    for i in range(count):
+        print"""
+	netec_meta.res_%s;
+    """ %(i),
+    print """
+	meta.cksum_compensate;
+}
+field_list_calculation l4_with_netec_checksum {
+    input {
+        l4_with_netec_list;
+    }
+    algorithm : csum16;
+    output_width : 16;
+}
+
+calculated_field udp.checksum  {
+	update l4_with_netec_checksum;
+}""",
     for i in range(count):
         s = """
 // AUTOGEN
 register r_xor_%s{
 	width : 16;
-	instance_count : 262144;
+	instance_count : 65536;
 }
 blackbox stateful_alu s_xor_%s{
 	reg : r_xor_%s;

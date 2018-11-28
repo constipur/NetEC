@@ -9,7 +9,7 @@
 cd $SDE/pkgsrc/p4-build
 make clean
 echo 'clean done!'
-./configure --prefix=$SDE_INSTALL --with-tofino enable_thrift=yes P4_PATH=$SDE/NetEC/netec.p4 P4_NAME=netec
+./configure --prefix=$SDE_INSTALL --with-tofino enable_thrift=yes P4_PATH=$SDE/NetEC/main_netec.p4 P4_NAME=netec
 
 make -j8
 echo 'make done!'

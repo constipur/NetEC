@@ -38,6 +38,7 @@ header_type netec_t{
 	fields {
 		index : 16 ;
 		data_0 : 16;
+		data_1 : 16;
 		// data_2 : 16;
 		// data_1 : 16;
 		// data_3 : 16;
@@ -55,6 +56,8 @@ header_type netec_t{
 		// data_15 : 16;
 	}
 }
+@pragma pa_solitary ingress netec.data_0
+@pragma pa_solitary ingress netec.data_1
 header netec_t netec;
 
 

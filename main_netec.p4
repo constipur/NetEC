@@ -27,14 +27,16 @@ header_type custom_metadata_t {
 		forward:8;
 		data:8;
 		res:8 ;
-		index:16;
+		type_:16;
+		index:32;
 		flag_finish : 1;
 		cksum_compensate : 16;
 		l4_proto:16;
 		ttl_length:16;
 		payload_csum : 16;
 		coeff: 32;
-		temp : 32;
+		temp : 16;
+		temp2 : 16;
 		to_query : 16;		
 	}
 }
@@ -50,6 +52,7 @@ field_list l4_with_netec_list {
 	udp.dstPort; 
 	udp.length_;
 	netec_meta.index;
+	netec_meta.type_;
 	netec_meta.res_0;
 	netec_meta.res_1;
 	// meta.netec_res_1;
@@ -156,6 +159,7 @@ action a_cksum_compensate(){
 	//fill_meta_netec_fields();
 	modify_field(meta.l4_proto,ipv4.protocol);
 	modify_field(netec_meta.index,netec.index);
+	modify_field(netec_meta.type_,netec.type_);
 	modify_field(meta.cksum_compensate,udp.length_);//The udp.length_ field mysteriously does not take affect.
 }
 
@@ -185,6 +189,9 @@ table t_get_coeff{
 
 action a_get_coeff(coeff){
 	modify_field(meta.coeff,coeff);
+	modify_field(meta.temp,netec.data_0);//writing to ilog tables
+	modify_field(meta.temp2,netec.index);//writing to log tables;
+	modify_field(meta.index,netec.index);
 }
 
 table t_get_log{
@@ -250,7 +257,7 @@ blackbox stateful_alu s_ilog_table{
 	output_dst : netec_meta.temp;
 }
 action a_get_ilog(){
-	s_ilog_table.execute_stateful_alu(meta.temp);
+	//s_ilog_table.i/_stateful_alu(meta.temp);
 }
 
 
@@ -274,14 +281,16 @@ control ingress {
 		}
 		*/
 		gf_multiply();
-		xor();
-		apply(t_finish);
-		if(meta.flag_finish == 1){
-			apply(t_send_res);
-			apply(t_cksum_compensate);
-		}	
-		else{
-			apply(drop_table);
+		if(netec.type_ == 0){
+			xor();
+			apply(t_finish);
+			if(meta.flag_finish == 1){
+				apply(t_send_res);
+				apply(t_cksum_compensate);
+			}	
+			else{
+				apply(drop_table);
+			}
 		}
 	}
 }

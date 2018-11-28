@@ -15,7 +15,7 @@ table t_xor_0{
 	default_action : a_xor_0();
 }
 action a_xor_0(){
-	s_xor_0.execute_stateful_alu(netec.index);
+	s_xor_0.execute_stateful_alu(meta.index);
 }
          
 // AUTOGEN
@@ -34,7 +34,7 @@ table t_xor_1{
 	default_action : a_xor_1();
 }
 action a_xor_1(){
-	s_xor_1.execute_stateful_alu(netec.index);
+	s_xor_1.execute_stateful_alu(meta.index);
 }
          
 control xor {
@@ -55,7 +55,9 @@ action fill_netec_fields(){
      
 header_type netec_meta_t{
 	fields{
-		index : 16;
+        type_ : 16;
+
+		index : 32;
         temp : 16;
      
         res_0 : 16;
@@ -85,7 +87,11 @@ table t_get_log_0{
 }
 blackbox stateful_alu s_log_table_0{
 	reg : r_log_table_0;
-	update_lo_1_value:register_lo;
+    condition_lo : netec.type_ == 1;
+    update_lo_1_predicate: condition_lo;
+	update_lo_1_value:meta.temp2;
+    update_lo_2_predicate: not condition_lo;
+	update_lo_2_value:register_lo;
 	output_value : register_lo;
 	output_dst : netec_meta.temp_0;
 }
@@ -93,13 +99,21 @@ action a_get_log_0(){
 	s_log_table_0.execute_stateful_alu(netec.data_0);
 }
 table t_log_add_0{
+    reads{
+        netec.type_:exact;
+    }
 	actions{
 		a_log_add_0;
+		a_log_mod_0;
 	}
 	default_action:a_log_add_0();
 }
 action a_log_add_0(){
 	add_to_field(netec_meta.temp_0,meta.coeff);
+}
+
+action a_log_mod_0(){
+    modify_field(netec_meta.temp_0,netec.index);
 }
 table t_get_ilog_0{
 	actions{
@@ -109,7 +123,11 @@ table t_get_ilog_0{
 }
 blackbox stateful_alu s_ilog_table_0{
 	reg : r_ilog_table_0;
-	update_lo_1_value:register_lo;
+    condition_lo: netec.type_ == 2;
+    update_lo_1_predicate : condition_lo;
+	update_lo_1_value : meta.temp;
+    update_lo_2_predicate : not condition_lo;
+	update_lo_2_value:register_lo;
 	output_value : register_lo;
 	output_dst : netec.data_0;
 }
@@ -136,7 +154,11 @@ table t_get_log_1{
 }
 blackbox stateful_alu s_log_table_1{
 	reg : r_log_table_1;
-	update_lo_1_value:register_lo;
+    condition_lo : netec.type_ == 1;
+    update_lo_1_predicate: condition_lo;
+	update_lo_1_value:meta.temp2;
+    update_lo_2_predicate: not condition_lo;
+	update_lo_2_value:register_lo;
 	output_value : register_lo;
 	output_dst : netec_meta.temp_1;
 }
@@ -144,13 +166,21 @@ action a_get_log_1(){
 	s_log_table_1.execute_stateful_alu(netec.data_1);
 }
 table t_log_add_1{
+    reads{
+        netec.type_:exact;
+    }
 	actions{
 		a_log_add_1;
+		a_log_mod_1;
 	}
 	default_action:a_log_add_1();
 }
 action a_log_add_1(){
 	add_to_field(netec_meta.temp_1,meta.coeff);
+}
+
+action a_log_mod_1(){
+    modify_field(netec_meta.temp_1,netec.index);
 }
 table t_get_ilog_1{
 	actions{
@@ -160,7 +190,11 @@ table t_get_ilog_1{
 }
 blackbox stateful_alu s_ilog_table_1{
 	reg : r_ilog_table_1;
-	update_lo_1_value:register_lo;
+    condition_lo: netec.type_ == 2;
+    update_lo_1_predicate : condition_lo;
+	update_lo_1_value : meta.temp;
+    update_lo_2_predicate : not condition_lo;
+	update_lo_2_value:register_lo;
 	output_value : register_lo;
 	output_dst : netec.data_1;
 }

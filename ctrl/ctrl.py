@@ -146,7 +146,14 @@ class L2Test(pd_base_tests.ThriftInterfaceDataPlane):
         self.client.t_get_coeff_table_add_with_a_get_coeff(self.sess_hdl,self.dev_tgt,
                                         netec_t_get_coeff_match_spec_t(ipv4_srcAddr=ipv4Addr_to_i32("10.0.0.6")),
                                         netec_a_get_coeff_action_spec_t(action_coeff=33653))
-
+        
+        self.client.t_log_add_0_table_add_with_a_log_mod_0(self.sess_hdl,self.dev_tgt,
+                                        netec_t_log_add_0_match_spec_t(netec_type_=2))
+        self.client.t_log_add_1_table_add_with_a_log_mod_1(self.sess_hdl,self.dev_tgt,
+                                        netec_t_log_add_1_match_spec_t(netec_type_=2))
+                                        
+                                                                        
+        """
         f = open("/root/bf-sde/bf-sde-8.2.0/NetEC/ctrl/log_tables.txt",'r')
         lines = f.readlines()
         for i in range(0,65536):
@@ -178,7 +185,7 @@ class L2Test(pd_base_tests.ThriftInterfaceDataPlane):
                 self.client.register_write_r_ilog_table_1(self.sess_hdl,self.dev_tgt,i-65536,a)
 
     	self.conn_mgr.complete_operations(self.sess_hdl)
-
+        """
 
 
 
@@ -203,12 +210,15 @@ class L2Test(pd_base_tests.ThriftInterfaceDataPlane):
     	print "Finish Configuring Mcast"
 
 
+
     def runTest(self):
 		#self.client.bypass1_set_default_action_bypass1_action(self.sess_hdl,self.dev_tgt);
 		#self.client.bypass2_set_default_action_bypass2_action(self.sess_hdl,self.dev_tgt);
+        hw_sync_flag = netec_register_flags_t(read_hw_sync = True)
 
-		while(True):
-			pass
+        while(True):
+            index = int(input("index: "))
+            print self.client.register_read_r_ilog_table_1(self.sess_hdl,self.dev_tgt,index,hw_sync_flag);
 
     # Use this method to return the DUT to the initial state by cleaning
     # all the configuration and clearing up the connection

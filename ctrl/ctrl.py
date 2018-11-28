@@ -138,14 +138,14 @@ class L2Test(pd_base_tests.ThriftInterfaceDataPlane):
                                                                   action_mac=macAddr_to_string("68:91:d0:61:b4:c4")))
         self.client.t_get_coeff_table_add_with_a_get_coeff(self.sess_hdl,self.dev_tgt,
                                         netec_t_get_coeff_match_spec_t(ipv4_srcAddr=ipv4Addr_to_i32("10.0.0.4")),
-                                        netec_a_get_coeff_action_spec_t(action_coeff=49830))
+                                        netec_a_get_coeff_action_spec_t(action_coeff=49830-65536))
 
         self.client.t_get_coeff_table_add_with_a_get_coeff(self.sess_hdl,self.dev_tgt,
                                         netec_t_get_coeff_match_spec_t(ipv4_srcAddr=ipv4Addr_to_i32("10.0.0.5")),
-                                        netec_a_get_coeff_action_spec_t(action_coeff=33890))
+                                        netec_a_get_coeff_action_spec_t(action_coeff=33890-65536))
         self.client.t_get_coeff_table_add_with_a_get_coeff(self.sess_hdl,self.dev_tgt,
                                         netec_t_get_coeff_match_spec_t(ipv4_srcAddr=ipv4Addr_to_i32("10.0.0.6")),
-                                        netec_a_get_coeff_action_spec_t(action_coeff=33653))
+                                        netec_a_get_coeff_action_spec_t(action_coeff=33653-65536))
 
         f = open("/root/bf-sde/bf-sde-8.2.0/NetEC/ctrl/log_tables.txt",'r')
         lines = f.readlines()
@@ -156,7 +156,7 @@ class L2Test(pd_base_tests.ThriftInterfaceDataPlane):
             else:
                 self.client.register_write_r_log_table(self.sess_hdl,self.dev_tgt,i,a)
 
-        for i in range(65536,196608):
+        for i in range(65536,65536*2):
             a = int(lines[i])
             if a > 32767:
                 self.client.register_write_r_ilog_table(self.sess_hdl,self.dev_tgt,i-65536,a-65536)

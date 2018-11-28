@@ -33,7 +33,7 @@ header_type custom_metadata_t {
 		l4_proto:16;
 		ttl_length:16;
 		payload_csum : 16;
-		coeff: 32;
+		coeff: 16;
 		temp : 32;
 		to_query : 16;		
 	}
@@ -51,7 +51,7 @@ field_list l4_with_netec_list {
 	udp.length_;
 	netec_meta.index;
 	netec_meta.res_0;
-	netec_meta.res_1;
+	//netec_meta.res_1;
 	// meta.netec_res_1;
 	// meta.netec_res_2;
 	// meta.netec_res_3;
@@ -215,8 +215,8 @@ table t_record{
 	default_action:a_record();
 }
 action a_record(){
-	modify_field(ipv4.identification,netec_meta.temp_1);
-	//modify_field(ipv4.diffserv,netec_meta.temp_1);
+	modify_field(ipv4.identification,netec_meta.temp_0);
+	//modify_field(ipv4.diffserv,meta.coeff);
 }
 
 
@@ -240,7 +240,7 @@ table t_get_ilog{
 }
 register r_ilog_table{
 	width : 16;
-	instance_count : 131072;
+	instance_count : 65536;
 }
 
 blackbox stateful_alu s_ilog_table{

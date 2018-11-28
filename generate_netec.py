@@ -1,7 +1,7 @@
 # Autogen xor buffer tables and related modules
 
 def main():
-    count = 2
+    count = 1
     for i in range(count):
         s = """
 // AUTOGEN
@@ -57,7 +57,7 @@ header_type netec_meta_t{
     for i in range(count):
         print """
         res_%s : 16;
-        temp_%s : 32;
+        temp_%s : 16;
         """ % (i,i),
     print """
     }

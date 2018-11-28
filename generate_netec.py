@@ -67,6 +67,15 @@ header_type netec_meta_t{
     for i in range(count):
         print """
 
+register r_log_table_%s{
+	width : 16;
+	instance_count : 65536;
+}
+register r_ilog_table_%s{
+    width : 16;
+    instance_count : 131072;
+}
+
 table t_get_log_%s{
 	actions{
 		a_get_log_%s;
@@ -74,7 +83,7 @@ table t_get_log_%s{
 	default_action:a_get_log_%s;
 }
 blackbox stateful_alu s_log_table_%s{
-	reg : r_log_table;
+	reg : r_log_table_%s;
 	update_lo_1_value:register_lo;
 	output_value : register_lo;
 	output_dst : netec_meta.temp_%s;
@@ -98,7 +107,7 @@ table t_get_ilog_%s{
 	default_action:a_get_ilog_%s;
 }
 blackbox stateful_alu s_ilog_table_%s{
-	reg : r_ilog_table;
+	reg : r_ilog_table_%s;
 	update_lo_1_value:register_lo;
 	output_value : register_lo;
 	output_dst : netec.data_%s;
@@ -107,7 +116,7 @@ action a_get_ilog_%s(){
 	s_ilog_table_%s.execute_stateful_alu(netec_meta.temp_%s);
 }
 
-        """ % (i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i),
+        """ % (i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i),
     print """
 control gf_multiply {
     """,

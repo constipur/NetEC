@@ -68,6 +68,15 @@ header_type netec_meta_t{
 }
      
 
+register r_log_table_0{
+	width : 16;
+	instance_count : 65536;
+}
+register r_ilog_table_0{
+    width : 16;
+    instance_count : 131072;
+}
+
 table t_get_log_0{
 	actions{
 		a_get_log_0;
@@ -75,7 +84,7 @@ table t_get_log_0{
 	default_action:a_get_log_0;
 }
 blackbox stateful_alu s_log_table_0{
-	reg : r_log_table;
+	reg : r_log_table_0;
 	update_lo_1_value:register_lo;
 	output_value : register_lo;
 	output_dst : netec_meta.temp_0;
@@ -99,7 +108,7 @@ table t_get_ilog_0{
 	default_action:a_get_ilog_0;
 }
 blackbox stateful_alu s_ilog_table_0{
-	reg : r_ilog_table;
+	reg : r_ilog_table_0;
 	update_lo_1_value:register_lo;
 	output_value : register_lo;
 	output_dst : netec.data_0;
@@ -109,7 +118,16 @@ action a_get_ilog_0(){
 }
 
          
-@pragma ignore_table_dependency t_get_log_0
+
+register r_log_table_1{
+	width : 16;
+	instance_count : 65536;
+}
+register r_ilog_table_1{
+    width : 16;
+    instance_count : 131072;
+}
+
 table t_get_log_1{
 	actions{
 		a_get_log_1;
@@ -117,7 +135,7 @@ table t_get_log_1{
 	default_action:a_get_log_1;
 }
 blackbox stateful_alu s_log_table_1{
-	reg : r_log_table;
+	reg : r_log_table_1;
 	update_lo_1_value:register_lo;
 	output_value : register_lo;
 	output_dst : netec_meta.temp_1;
@@ -134,7 +152,6 @@ table t_log_add_1{
 action a_log_add_1(){
 	add_to_field(netec_meta.temp_1,meta.coeff);
 }
-@pragma ignore_table_dependency t_get_ilog_0
 table t_get_ilog_1{
 	actions{
 		a_get_ilog_1;
@@ -142,7 +159,7 @@ table t_get_ilog_1{
 	default_action:a_get_ilog_1;
 }
 blackbox stateful_alu s_ilog_table_1{
-	reg : r_ilog_table;
+	reg : r_ilog_table_1;
 	update_lo_1_value:register_lo;
 	output_value : register_lo;
 	output_dst : netec.data_1;
@@ -155,10 +172,9 @@ action a_get_ilog_1(){
 control gf_multiply {
      
         apply(t_get_log_0);
+         
         apply(t_get_log_1);
-
-        apply(t_record); 
-        
+         
         apply(t_log_add_0);
          
         apply(t_log_add_1);
@@ -169,6 +185,5 @@ control gf_multiply {
         if(netec.data_1 != 0)
             apply(t_get_ilog_1);
          
-        //apply(t_record); 
 }
     

@@ -152,18 +152,30 @@ class L2Test(pd_base_tests.ThriftInterfaceDataPlane):
         for i in range(0,65536):
             a = int(lines[i])
             if a > 32767:
-                self.client.register_write_r_log_table(self.sess_hdl,self.dev_tgt,i,a-65536)
+                self.client.register_write_r_log_table_0(self.sess_hdl,self.dev_tgt,i,a-65536)
             else:
-                self.client.register_write_r_log_table(self.sess_hdl,self.dev_tgt,i,a)
+                self.client.register_write_r_log_table_0(self.sess_hdl,self.dev_tgt,i,a)
 
         for i in range(65536,196608):
             a = int(lines[i])
             if a > 32767:
-                self.client.register_write_r_ilog_table(self.sess_hdl,self.dev_tgt,i-65536,a-65536)
+                self.client.register_write_r_ilog_table_0(self.sess_hdl,self.dev_tgt,i-65536,a-65536)
             else:
-                self.client.register_write_r_ilog_table(self.sess_hdl,self.dev_tgt,i-65536,a)
+                self.client.register_write_r_ilog_table_0(self.sess_hdl,self.dev_tgt,i-65536,a)
             
+        for i in range(0,65536):
+            a = int(lines[i])
+            if a > 32767:
+                self.client.register_write_r_log_table_1(self.sess_hdl,self.dev_tgt,i,a-65536)
+            else:
+                self.client.register_write_r_log_table_1(self.sess_hdl,self.dev_tgt,i,a)
 
+        for i in range(65536,196608):
+            a = int(lines[i])
+            if a > 32767:
+                self.client.register_write_r_ilog_table_1(self.sess_hdl,self.dev_tgt,i-65536,a-65536)
+            else:
+                self.client.register_write_r_ilog_table_1(self.sess_hdl,self.dev_tgt,i-65536,a)
 
     	self.conn_mgr.complete_operations(self.sess_hdl)
 

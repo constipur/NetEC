@@ -35,6 +35,8 @@ class ServerThread extends Thread{
                     /* read from inputstream */
                     readLength = in.read(byteBuffer);
                     System.out.println(readLength + " bytes read!");
+                    if(readLength == -1)
+                        break;
                     assert readLength == FIELD_COUNT * 2;
                     if(pos + FIELD_COUNT * 2 > FILE_SIZE){
                         /* should contain payload less than FIELD_COUNT * 2 */
@@ -50,7 +52,8 @@ class ServerThread extends Thread{
                     e.printStackTrace();
                 }
             }
-        } catch(IOException e){
+        } catch(Exception e){
+            e.printStackTrace();
             System.err.println("IO Exception...Shutting down...");
         } finally{
             /* close the socket */
@@ -82,8 +85,9 @@ public class BMPRecvTCP{
 
     public static void main(String[] args) throws IOException{
         ServerSocket serverSocket = new ServerSocket(PORT);
+        // serverSocket.setReceiveBufferSize(1200);
+        // serverSocket.setTcpNoDelay(true);
         System.out.println("Server started");
-
         try{
             while(true){
                 /* wait for connection */

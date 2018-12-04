@@ -1,2 +1,6 @@
+# python binary
 *.pyc
+# java binary
+*.class
+# vscode
 .vscode/*

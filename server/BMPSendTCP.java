@@ -10,6 +10,11 @@ import java.net.InetAddress;
 import java.net.Socket;
 
 
+class EOReadingFileException extends Exception{
+    public EOReadingFileException(){
+        super();
+    }
+}
 public class BMPSendTCP{
     public static byte[] short2byte(short s){
 		byte[] res = new byte[2];
@@ -22,6 +27,7 @@ public class BMPSendTCP{
     public static final String INPUT_FILE_NAME = "/home/guest/NetEC/RS/blue.bmp";
     public static final int FIELD_COUNT = 200;
     public static final int HEADER_LENGTH = 6;
+    public static final int PACKET_AT_A_TIME = 3;
 
     public static byte[] intToByteArray(int a) {
         return new byte[] {
@@ -56,34 +62,35 @@ public class BMPSendTCP{
             System.out.println("Packet size is: " + packetSize);
             int bufferSize = 2 * packetSize;
             byte[] buffer = new byte[bufferSize];
-            int i = 0;
-            boolean secondPart = true;
+            int packetCount = 0;
+            int packetAtATime = PACKET_AT_A_TIME;
 
-            while((fileIn.read(buffer, HEADER_LENGTH, dataSize))!= -1){
+            while(true){
                 /* prepare data */
-                if(fileIn.read(buffer, HEADER_LENGTH, dataSize) == -1)
-                    /* no data to send */
-                    break;
-                if(fileIn.read(buffer, packetSize + HEADER_LENGTH, dataSize) == -1)
-                    /* send first half of data */
-                    secondPart = false;
+                for(int i = 0;i < packetAtATime;i++){
+                    if(fileIn.read(buffer, i * packetSize + HEADER_LENGTH, dataSize) == -1){
+                        if(i == 0)
+                            /* no data to send */
+                            throw new EOReadingFileException();
+                        else{
+                            packetAtATime = i;
+                            break;
+                        }
+                    }
+                }
                 /* prepare header */
-                byte[] index_1 = intToByteArray(i);
-                byte[] type_1 = short2byte((short)(0));
-                /* arraycopy(src, srcPos, dest, destPos, length) */
-                System.arraycopy(type_1, 0, buffer, 0, 2);
-                System.arraycopy(index_1, 0, buffer, 0 + 2, 4);
-                if(secondPart){
-                    byte[] index_2 = intToByteArray(i + 1);
-                    byte[] type_2 = short2byte((short)(0));
-                    System.arraycopy(type_2, 0, buffer, packetSize, 2);
-                    System.arraycopy(index_2, 0, buffer, packetSize + 2, 4);
+                for(int i = 0;i < packetAtATime;i++){
+                    byte[] type = short2byte((short)(0));
+                    byte[] index = intToByteArray(packetCount);
+                    /* arraycopy(src, srcPos, dest, destPos, length) */
+                    System.arraycopy(type, 0, buffer, packetCount * i, 2);
+                    System.arraycopy(index, 0, buffer, packetCount * i + 2, 4);
                 }
                 /* send to outputstream */
                 out.write(buffer);
                 // out.flush();
                 /* packet counting */
-                i += 2;
+                packetCount += packetAtATime;
                 /* assign new memory for buffer */
                 buffer = new byte[bufferSize];
             }

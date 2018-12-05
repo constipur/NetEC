@@ -38,6 +38,8 @@ header_type custom_metadata_t {
 		temp : 16;
 		temp2 : 16;
 		to_query : 16;		
+
+		direction : 8;
 	}
 }
 metadata custom_metadata_t meta;
@@ -132,6 +134,27 @@ action a_record(){
 	//modify_field(ipv4.diffserv,netec_meta.temp_1);
 }
 
+table t_direction_check{
+	reads{
+		ipv4.srcAddr:exact;
+	}
+	actions{
+		a_multicast;
+		a_aggregate;
+		nop;
+	}
+	default_action : nop();
+}
+
+action a_multicast(grp_id){
+	modify_field(ig_intr_md_for_tm.mcast_grp_a,grp_id);
+	modify_field(meta.direction,1);
+}
+
+action a_aggregate(){
+	modify_field(meta.direction,2);
+}
+
 
 control ingress {
 	/*
@@ -140,6 +163,12 @@ control ingress {
 	else if(ig_intr_md.ingress_port == 136){
 		apply(bypass2);}
 	*/
+	apply(t_direction_check_table);
+	if(meta.direction == 2){
+		
+
+	}
+
 
 	if(valid(netec)){
 		apply(t_get_coeff);
@@ -151,6 +180,7 @@ control ingress {
 			apply(t_record);
 		}
 		*/
+	
 		gf_multiply();
 		if(netec.type_ == 0){
 			xor();

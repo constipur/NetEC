@@ -1,7 +1,7 @@
 # Autogen xor buffer tables and related modules
 
 def main():
-    count = 8
+    count = 2
     print """
 header_type netec_t{
 	fields {

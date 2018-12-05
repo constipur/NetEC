@@ -20,38 +20,48 @@ class ServerThread extends Thread{
     static final int HEADER_LENGTH = BMPSendTCP.HEADER_LENGTH;
     static final int FIELD_COUNT = BMPSendTCP.FIELD_COUNT;
 
+    class DataReadCompleteException extends Exception{
+        public DataReadCompleteException(){
+            super();
+        }
+    }
 
     @Override
     public void run() {
         byte[] image = new byte[FILE_SIZE];
         int pos = 0;
-        int packetLength = HEADER_LENGTH + 2 * FIELD_COUNT;
+        int dataLength = 2 * FIELD_COUNT;
+        int packetLength = HEADER_LENGTH + dataLength;
+        int packetPerBuffer = 5;
+        int buffersize = packetPerBuffer * packetLength;
 
         try{
             while(true){
-                try{
-                    byte[] byteBuffer = new byte[FILE_SIZE];
-                    int readLength = 0;
-                    /* read from inputstream */
-                    readLength = in.read(byteBuffer);
-                    System.out.println(readLength + " bytes read!");
-                    if(readLength == -1)
-                        break;
-                    assert readLength == packetLength;
-                    if(pos + FIELD_COUNT * 2 > FILE_SIZE){
-                        /* should contain payload less than FIELD_COUNT * 2 */
-                        System.arraycopy(byteBuffer, 6, image, pos, FILE_SIZE - pos);
+                byte[] byteBuffer = new byte[buffersize];
+                int readLength = 0;
+                /* read from inputstream */
+                readLength = in.read(byteBuffer);
+                System.out.println(readLength + " bytes read!");
+                if(readLength == -1)
+                    break;
+                for(int i = 0;i < packetPerBuffer;i++){
+                    if(pos + dataLength > FILE_SIZE){
+                        /* arraycopy(src, srcPos, dest, destPos, length) */
+                        /* should contain payload less than dataLength */
+                        System.arraycopy(byteBuffer, packetLength * i + HEADER_LENGTH, image, pos, FILE_SIZE - pos);
+                        /* stop receiving data */
+                        throw new DataReadCompleteException();
                     }
                     else{
-                        /* should contain payload equal to FIELD_COUNT * 2 */
-                        System.arraycopy(byteBuffer, 6, image, pos, readLength);
+                        /* should contain payload equal to dataLength */
+                        System.arraycopy(byteBuffer,  packetLength * i + HEADER_LENGTH, image, pos, dataLength);
+                        pos += dataLength;
                     }
-                    pos += readLength;
-                    System.out.println(pos);
-                }catch(Exception e){
-                    e.printStackTrace();
                 }
+                System.out.println("Now " + pos + " bytes have been received!");
             }
+        } catch(DataReadCompleteException e){
+            System.out.println("Receiving Complete!");
         } catch(Exception e){
             e.printStackTrace();
             System.err.println("IO Exception...Shutting down...");

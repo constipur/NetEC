@@ -23,7 +23,7 @@ public class BMPSendTCP{
 		return res;
     }
 
-    public static final String serverAddrStr = "202.112.237.136";
+    public static final String RECV_IP_ADDR = "202.112.237.136";
     public static final String INPUT_FILE_NAME = "/home/guest/NetEC/RS/blue.bmp";
     public static final int FIELD_COUNT = 50;
     public static final int HEADER_LENGTH = 6;
@@ -42,7 +42,7 @@ public class BMPSendTCP{
         String inputFileName = INPUT_FILE_NAME;
 
         int serverPort = BMPRecvTCP.PORT;
-        InetAddress serverAddr = InetAddress.getByName(serverAddrStr);
+        InetAddress serverAddr = InetAddress.getByName(RECV_IP_ADDR);
         System.out.println("Server: " + serverAddr + ":" + serverPort);
 
         /* open socket to server */
@@ -60,6 +60,7 @@ public class BMPSendTCP{
             int dataSize = FIELD_COUNT * 2;
             int packetSize = HEADER_LENGTH + dataSize;
             System.out.println("Packet size is: " + packetSize);
+            System.out.println("MSS at receiving side is supposed to be set to " + (packetSize - 12 /* tcp options */));
             int bufferSize = PACKET_AT_A_TIME * packetSize;
             byte[] buffer = new byte[bufferSize];
             int packetCount = 0;

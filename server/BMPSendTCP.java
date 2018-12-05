@@ -18,9 +18,10 @@ public class BMPSendTCP{
 		return res;
     }
 
-    public static final String serverAddrStr = "192.168.1.3";
-    public static final String INPUT_FILE_NAME = "/home/kongxiao0532/blue.bmp";
-    public static final int FIELD_COUNT = 8;
+    public static final String serverAddrStr = "202.112.237.136";
+    public static final String INPUT_FILE_NAME = "/home/guest/NetEC/RS/blue.bmp";
+    public static final int FIELD_COUNT = 200;
+    public static final int HEADER_LENGTH = 6;
 
     public static byte[] intToByteArray(int a) {
         return new byte[] {
@@ -40,6 +41,7 @@ public class BMPSendTCP{
 
         /* open socket to server */
         Socket socket = new Socket(serverAddr, serverPort);
+        // socket.setTcpNoDelay(true);
         /* get file inputstream */
         InputStream fileIn = new FileInputStream(inputFileName);
         try{
@@ -47,25 +49,43 @@ public class BMPSendTCP{
             // socket.setTcpNoDelay(true);
             /* get outputstream */
             OutputStream out = new DataOutputStream(socket.getOutputStream());
-            int bufferSize = 6 + FIELD_COUNT * 2;
+
+            /* calculate packet size */
+            int dataSize = FIELD_COUNT * 2;
+            int packetSize = HEADER_LENGTH + dataSize;
+            System.out.println("Packet size is: " + packetSize);
+            int bufferSize = 2 * packetSize;
             byte[] buffer = new byte[bufferSize];
             int i = 0;
-            while((fileIn.read(buffer, 6, bufferSize - 6))!= -1){
-                // sleep
-                // if(i % 30 == 0) Thread.sleep(1);
-                /* prepare tcp payload */
-                byte[] index = intToByteArray(i);
-                byte[] type= short2byte((short)(0));
+            boolean secondPart = true;
+
+            while((fileIn.read(buffer, HEADER_LENGTH, dataSize))!= -1){
+                /* prepare data */
+                if(fileIn.read(buffer, HEADER_LENGTH, dataSize) == -1)
+                    /* no data to send */
+                    break;
+                if(fileIn.read(buffer, packetSize + HEADER_LENGTH, dataSize) == -1)
+                    /* send first half of data */
+                    secondPart = false;
+                /* prepare header */
+                byte[] index_1 = intToByteArray(i);
+                byte[] type_1 = short2byte((short)(0));
                 /* arraycopy(src, srcPos, dest, destPos, length) */
-                System.arraycopy(type, 0, buffer, 0, 2);
-                System.arraycopy(index, 0, buffer, 2, 4);
+                System.arraycopy(type_1, 0, buffer, 0, 2);
+                System.arraycopy(index_1, 0, buffer, 0 + 2, 4);
+                if(secondPart){
+                    byte[] index_2 = intToByteArray(i + 1);
+                    byte[] type_2 = short2byte((short)(0));
+                    System.arraycopy(type_2, 0, buffer, packetSize, 2);
+                    System.arraycopy(index_2, 0, buffer, packetSize + 2, 4);
+                }
                 /* send to outputstream */
                 out.write(buffer);
                 // out.flush();
                 /* packet counting */
-                i += 1;
+                i += 2;
                 /* assign new memory for buffer */
-            	buffer = new byte[bufferSize];
+                buffer = new byte[bufferSize];
             }
         } catch (Exception e){
             e.printStackTrace();

@@ -17,27 +17,27 @@ class ServerThread extends Thread{
 
     static final int FILE_SIZE = 80454;
     static final String FILE_NAME = "recon.bmp";
-    static final int FIELD_COUNT = 8;
-    static final int BUFFER_LENGTH = 10000;
+    static final int HEADER_LENGTH = BMPSendTCP.HEADER_LENGTH;
+    static final int FIELD_COUNT = BMPSendTCP.FIELD_COUNT;
+
 
     @Override
     public void run() {
         byte[] image = new byte[FILE_SIZE];
-        byte[] buf = new byte[6 + 2 * FIELD_COUNT];
-        int count = 0;
         int pos = 0;
+        int packetLength = HEADER_LENGTH + 2 * FIELD_COUNT;
 
         try{
             while(true){
                 try{
-                    byte[] byteBuffer = new byte[BUFFER_LENGTH];
+                    byte[] byteBuffer = new byte[FILE_SIZE];
                     int readLength = 0;
                     /* read from inputstream */
                     readLength = in.read(byteBuffer);
                     System.out.println(readLength + " bytes read!");
                     if(readLength == -1)
                         break;
-                    assert readLength == FIELD_COUNT * 2;
+                    assert readLength == packetLength;
                     if(pos + FIELD_COUNT * 2 > FILE_SIZE){
                         /* should contain payload less than FIELD_COUNT * 2 */
                         System.arraycopy(byteBuffer, 6, image, pos, FILE_SIZE - pos);
@@ -86,7 +86,6 @@ public class BMPRecvTCP{
     public static void main(String[] args) throws IOException{
         ServerSocket serverSocket = new ServerSocket(PORT);
         // serverSocket.setReceiveBufferSize(1200);
-        // serverSocket.setTcpNoDelay(true);
         System.out.println("Server started");
         try{
             while(true){

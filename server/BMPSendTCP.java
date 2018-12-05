@@ -25,9 +25,9 @@ public class BMPSendTCP{
 
     public static final String serverAddrStr = "202.112.237.136";
     public static final String INPUT_FILE_NAME = "/home/guest/NetEC/RS/blue.bmp";
-    public static final int FIELD_COUNT = 200;
+    public static final int FIELD_COUNT = 50;
     public static final int HEADER_LENGTH = 6;
-    public static final int PACKET_AT_A_TIME = 3;
+    public static final int PACKET_AT_A_TIME = 10;
 
     public static byte[] intToByteArray(int a) {
         return new byte[] {
@@ -60,7 +60,7 @@ public class BMPSendTCP{
             int dataSize = FIELD_COUNT * 2;
             int packetSize = HEADER_LENGTH + dataSize;
             System.out.println("Packet size is: " + packetSize);
-            int bufferSize = 2 * packetSize;
+            int bufferSize = PACKET_AT_A_TIME * packetSize;
             byte[] buffer = new byte[bufferSize];
             int packetCount = 0;
             int packetAtATime = PACKET_AT_A_TIME;
@@ -81,10 +81,10 @@ public class BMPSendTCP{
                 /* prepare header */
                 for(int i = 0;i < packetAtATime;i++){
                     byte[] type = short2byte((short)(0));
-                    byte[] index = intToByteArray(packetCount);
+                    byte[] index = intToByteArray(packetCount + i);
                     /* arraycopy(src, srcPos, dest, destPos, length) */
-                    System.arraycopy(type, 0, buffer, packetCount * i, 2);
-                    System.arraycopy(index, 0, buffer, packetCount * i + 2, 4);
+                    System.arraycopy(type, 0, buffer,  packetSize * i, 2);
+                    System.arraycopy(index, 0, buffer, packetSize * i + 2, 4);
                 }
                 /* send to outputstream */
                 out.write(buffer);
@@ -94,6 +94,8 @@ public class BMPSendTCP{
                 /* assign new memory for buffer */
                 buffer = new byte[bufferSize];
             }
+        } catch (EOReadingFileException e){
+            System.out.println("All data sent!");
         } catch (Exception e){
             e.printStackTrace();
         }finally{

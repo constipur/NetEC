@@ -1,24 +1,11 @@
 import java.io.*;
 import java.net.*;
 
-class ServerThread extends Thread{
+public class BMPTransferClient{
 
-    private Socket socket;
-    private DataInputStream in;
-
-    public ServerThread(Socket s) throws IOException{
-        socket = s;
-        in = new DataInputStream(socket.getInputStream());
-        System.out.println("Connection from " +
-            socket.getInetAddress().toString() + ":" + socket.getPort());
-        /* calls Thread.run() */
-        start();
-    }
-
-    static final int FILE_SIZE = 80454;
-    static final String FILE_NAME = "recon.bmp";
-    static final int HEADER_LENGTH = BMPSendTCP.HEADER_LENGTH;
-    static final int FIELD_COUNT = BMPSendTCP.FIELD_COUNT;
+    /* packet para */
+    static final int HEADER_LENGTH = BMPTransferServer.HEADER_LENGTH;
+    static final int FIELD_COUNT = BMPTransferServer.FIELD_COUNT;
 
     class DataReadCompleteException extends Exception{
         public DataReadCompleteException(){
@@ -26,9 +13,27 @@ class ServerThread extends Thread{
         }
     }
 
-    @Override
-    public void run() {
-        byte[] image = new byte[FILE_SIZE];
+    private String serverAddrStr;
+    private int serverPort;
+
+    public BMPTransferClient(String serverAddrStr, int serverPort){
+        this.serverAddrStr = serverAddrStr;
+        this.serverPort = serverPort;
+    }
+
+    public void getFile(int fileSize, String fileName) throws IOException{
+        InetAddress serverAddr = InetAddress.getByName(serverAddrStr);
+        System.out.println("Target server: " + serverAddr + ":" + serverPort);
+        /* open socket to server */
+        Socket socket = new Socket(serverAddr, serverPort);;
+        System.out.println("Receiving side started!");
+        System.out.println("Client Socket: " + socket);
+
+        /* get in stream */
+        DataInputStream in = new DataInputStream(socket.getInputStream());
+
+        /* receive data */
+        byte[] image = new byte[fileSize];
         int pos = 0;
         int dataLength = 2 * FIELD_COUNT;
         int packetLength = HEADER_LENGTH + dataLength;
@@ -45,10 +50,10 @@ class ServerThread extends Thread{
                 if(readLength == -1)
                     break;
                 for(int i = 0;i < packetPerBuffer;i++){
-                    if(pos + dataLength > FILE_SIZE){
+                    if(pos + dataLength > fileSize){
                         /* arraycopy(src, srcPos, dest, destPos, length) */
                         /* should contain payload less than dataLength */
-                        System.arraycopy(byteBuffer, packetLength * i + HEADER_LENGTH, image, pos, FILE_SIZE - pos);
+                        System.arraycopy(byteBuffer, packetLength * i + HEADER_LENGTH, image, pos, fileSize - pos);
                         /* stop receiving data */
                         throw new DataReadCompleteException();
                     }
@@ -76,10 +81,9 @@ class ServerThread extends Thread{
         /* ideally, the connection will be closed
          * once all data has been transfered
          */
-        assert pos == FILE_SIZE;
-        System.out.println("Writing data into file: " + FILE_NAME);
+        System.out.println("Writing data into file: " + fileName);
         try{
-            OutputStream out = new FileOutputStream(FILE_NAME);
+            OutputStream out = new FileOutputStream(fileName);
             out.write(image);
             out.flush();
             out.close();
@@ -87,29 +91,20 @@ class ServerThread extends Thread{
             e.printStackTrace();
         }
     }
-}
 
-public class BMPRecvTCP{
+    /* server info */
+    public static final String SERVER_ADDR_STR = "192.168.1.2";
+    public static final int SERVER_PORT = BMPTransferServer.SERVER_PORT;
+    /* file config */
+    static final int FILE_SIZE = 80454;
+    static final String FILE_NAME = "recon.bmp";
 
-    static final int PORT = 20001;
-
-    public static void main(String[] args) throws IOException{
-        ServerSocket serverSocket = new ServerSocket(PORT);
-        // serverSocket.setReceiveBufferSize(1200);
-        System.out.println("Server started");
+    public static void main(String[] args){
+        BMPTransferClient client = new BMPTransferClient(SERVER_ADDR_STR, SERVER_PORT);
         try{
-            while(true){
-                /* wait for connection */
-                Socket socket = serverSocket.accept();
-                try{
-                    new ServerThread(socket);
-                }catch(IOException e){
-                    System.out.println("Failed on creating ServerThread");
-                    socket.close();
-                }
-            }
-        }finally{
-            serverSocket.close();
+            client.getFile(FILE_SIZE, FILE_NAME);
+        } catch(Exception e){
+            e.printStackTrace();
         }
     }
 }

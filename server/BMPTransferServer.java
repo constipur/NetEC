@@ -56,7 +56,7 @@ class ServerThread extends Thread{
             int dataSize = fieldCount * 2;
             int packetSize = headerLength + dataSize;
             System.out.println("Packet size is: " + packetSize);
-            System.out.println("MSS at receiving side is supposed to be set to " + (packetSize - 12 /* tcp options */));
+            System.out.println("MSS at receiving side is supposed to be set to " + (packetSize + 12 /* tcp options */));
             int bufferSize = PACKET_AT_A_TIME * packetSize;
             byte[] buffer = new byte[bufferSize];
             int packetCount = 0;

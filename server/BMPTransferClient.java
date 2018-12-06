@@ -6,6 +6,7 @@ public class BMPTransferClient{
     /* packet para */
     static final int HEADER_LENGTH = BMPTransferServer.HEADER_LENGTH;
     static final int FIELD_COUNT = BMPTransferServer.FIELD_COUNT;
+    static final int PKT_PER_RECV_BUFFER = 10;
 
     class DataReadCompleteException extends Exception{
         public DataReadCompleteException(){
@@ -37,7 +38,7 @@ public class BMPTransferClient{
         int pos = 0;
         int dataLength = 2 * FIELD_COUNT;
         int packetLength = HEADER_LENGTH + dataLength;
-        int packetPerBuffer = 5;
+        int packetPerBuffer = PKT_PER_RECV_BUFFER;
         int buffersize = packetPerBuffer * packetLength;
 
         try{

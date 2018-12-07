@@ -15,12 +15,15 @@ limitations under the License.
 */
 
 
-#define NETEC_DN_PORT 20001
-
+/* network protocol */
 #define TCP_FLAG_SYN 0x02
 #define TCP_FLAG_ACK 0x10
 #define TCP_FLAG_SA 0x12
 #define TCP_FLAG_PA 0x18
+#define IP_HEADER_LENGTH -20
+
+/* configuration */
+#define NETEC_DN_PORT 20001
 
 #define DN_COUNT 3
 
@@ -50,6 +53,7 @@ header_type custom_metadata_t {
 		l4_proto : 16;
 		ttl_length : 16;
 		payload_csum : 16;
+		tcpLength : 16;
 		coeff: 32;
 		temp : 16;
 		temp2 : 16;
@@ -152,6 +156,15 @@ action a_record(){
 	// modify_field(ipv4.diffserv, netec_meta.temp_1);
 }
 
+/* calculate tcp length for checksum */
+table t_cal_tcp_length{
+	actions{ a_cal_tcp_length; }
+	default_action : a_cal_tcp_length();
+}
+action a_cal_tcp_length(){
+	add(meta.tcpLength, ipv4.totalLen, IP_HEADER_LENGTH/* negative */);
+}
+
 /* prepare paras for calculation */
 table t_prepare_paras{
 	actions{ a_prepare_paras; }
@@ -243,6 +256,8 @@ action a_seq_zero(){
 /**************************************************/
 /**************** INGRESS pipeline ****************/
 control ingress {
+	/* calculate tcp length for checksum */
+	apply(t_cal_tcp_length);
 
 	if(tcp.dstPort == NETEC_DN_PORT){
 		/* packets from client

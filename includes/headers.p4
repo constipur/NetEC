@@ -21,7 +21,7 @@ header_type ipv4_t {
 	protocol : 8;
 	hdrChecksum : 16;
 	srcAddr : 32;
-	dstAddr: 32;
+	dstAddr : 32;
 	}
 }
 header_type udp_t {

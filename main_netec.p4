@@ -157,7 +157,7 @@ table t_prepare_paras{
 	actions{ a_prepare_paras; }
 	default_action : a_prepare_paras();
 }
-aciton a_prepare_paras(){
+action a_prepare_paras(){
 	modify_field(meta.index, netec.index);
 }
 
@@ -244,7 +244,7 @@ action a_seq_zero(){
 /**************** INGRESS pipeline ****************/
 control ingress {
 
-	if(tcp.dstPort == NETEC_DN_PORT)
+	if(tcp.dstPort == NETEC_DN_PORT){
 		/* packets from client
 		 * always multicast to all datanodes
 		 */
@@ -259,7 +259,8 @@ control ingress {
 			 */
 		}
 		apply(t_multicast);
-	}else if(tcp.srcPort == NETEC_DN_PORT){
+	}
+	if(tcp.srcPort == NETEC_DN_PORT){
 		/* packets from DNs */
 		if(tcp.flags == TCP_FLAG_SA){
 			/* SYN + ACK */
@@ -267,10 +268,11 @@ control ingress {
 			if(meta.sa_finish == 1){
 				apply(t_seq_zero);
 			}
-		}else if(tcp.flags == TCP_FLAG_ACK && valid(netec)){
+		}
+		if(tcp.flags == TCP_FLAG_ACK and valid(netec)){
 			if(netec.type_ == 0){
 				/* data packets */
-				apply(a_prepare_paras);
+				apply(t_prepare_paras);
 				xor();
 				apply(t_finish);
 				if(meta.flag_finish == 1){
@@ -333,7 +335,7 @@ table t_use_src_as_dn_port{
 	default_action : a_use_src_as_dn_port();
 }
 action a_use_src_as_dn_port(){
-	modify_field"(meta.dn_port_for_seq, ig_intr_md.ingress_port);
+	modify_field(meta.dn_port_for_seq, ig_intr_md.ingress_port);
 }
 /* write DN's SEQ# if TCP SYN+ACK
  * read initial SEQ# if not SYN+ACK
@@ -346,7 +348,7 @@ table t_dn_rs_seq{
 	actions{ a_dn_rs_seq; a_nop; }
 	default_action : a_nop();
 }
-action a_dn_rs_seq(int dn_index){
+action a_dn_rs_seq(dn_index){
 	s_rs_seq.execute_stateful_alu(dn_index);
 }
 register r_dn_rs_seq{
@@ -358,7 +360,7 @@ blackbox stateful_alu s_rs_seq{
 	condition_lo : meta.sa_from_dn == 1;
 	/* if TCP SYN+ACK from DN, store seq# */
 	update_lo_1_predicate : condition_lo;
-	update_lo_1_value : tcp.seq;
+	update_lo_1_value : tcp.seqNo;
 	/* else, read only */
 	update_lo_2_predicate : not condition_lo;
 	update_lo_2_value : register_lo;
@@ -372,11 +374,11 @@ table t_modify_ack_to_DNs{
 	default_action : a_modify_ack_to_DNs();
 }
 action a_modify_ack_to_DNs(){
-	add_to_field(tcp.ACK, meta.dn_init_seq);
+	add_to_field(tcp.ackNo, meta.dn_init_seq);
 }
 /* modify SEQ# for packets from DNs to client */
 table t_modify_seq_to_client{
-	acitons{ a_modify_seq_to_client; }
+	actions{ a_modify_seq_to_client; }
 	default_action : a_modify_seq_to_client();
 }
 action a_modify_seq_to_client(){
@@ -431,7 +433,7 @@ control egress {
 	 */
 	apply(t_dn_rs_seq);
 	/* modify ACK# to match each DN's SEQ# when multicasting */
-	if(tcp.dstPort == NETEC_DN_PORT && tcp.flags != TCP_FLAG_SYN){
+	if(tcp.dstPort == NETEC_DN_PORT and tcp.flags != TCP_FLAG_SYN){
 		/* packets from client, needs to modify ACK# */
 		apply(t_modify_ack_to_DNs);
 	}

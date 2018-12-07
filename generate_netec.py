@@ -17,7 +17,7 @@ header_type netec_t{
 header netec_t netec;
 """,
     print """
-field_list l4_with_netec_list {
+field_list l4_with_netec_list_udp {
 	ipv4.srcAddr;
     ipv4.dstAddr;
 	meta.l4_proto;
@@ -33,16 +33,44 @@ field_list l4_with_netec_list {
 """ %(i),
     print """
 	meta.cksum_compensate;
+}""",
+    print """
+field_list l4_with_netec_list_tcp {
+	ipv4.srcAddr;
+    ipv4.dstAddr;
+	meta.l4_proto;
+    8'0;
+    ipv4.protocol;
+    meta.tcpLength;
+	tcp.srcPort;
+	tcp.dstPort;
+    tcp.seqNo;
+    tcp.ackNo;
+	tcp.dataOffset;
+    tcp.res;
+    tcp.flags;
+	tcp.window;
+	tcp.checksum;
+	tcp.urgentPtr;
+	netec_meta.index;
+	netec_meta.type_;
+""",
+    for i in range(count):
+        print"""
+	netec_meta.res_%s;
+""" %(i),
+    print """
+	meta.cksum_compensate;
 }
 field_list_calculation l4_with_netec_checksum {
     input {
-        l4_with_netec_list;
+        l4_with_netec_list_tcp;
     }
     algorithm : csum16;
     output_width : 16;
 }
 
-calculated_field udp.checksum  {
+calculated_field tcp.checksum  {
 	update l4_with_netec_checksum;
 }""",
     for i in range(count):

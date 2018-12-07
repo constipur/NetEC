@@ -38,9 +38,12 @@ parser parse_udp {
 
 /* server (sending data) port 20001 */
 #define TCP_SPORT_NETEC NETEC_DN_PORT
+#define IP_HEADER_LENGTH 20
 parser parse_tcp {
 	extract(tcp);
-	set_metadata(meta.cksum_compensate,0);
+	set_metadata(meta.tcpLength, ipv4.totalLen);
+	subtract_from_field(meta.tcpLength, IP_HEADER_LENGTH);
+	set_metadata(meta.cksum_compensate, 0);
 	return select(tcp.srcPort){
 		/* srcPort == 20001
 		 * carrying data

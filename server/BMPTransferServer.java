@@ -143,7 +143,7 @@ public class BMPTransferServer{
 
     public static final int SERVER_PORT = 20001;
     public static final String INPUT_FILE_NAME = "/home/kongxiao0532/thu/projects/netec-pdp/code/RS/blue.bmp";
-    public static final int FIELD_COUNT = 50;
+    public static final int FIELD_COUNT = 8;
     public static final int HEADER_LENGTH = 6;
 
     public static void main(String[] args) throws IOException, InterruptedException {

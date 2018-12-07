@@ -118,37 +118,76 @@ class L2Test(pd_base_tests.ThriftInterfaceDataPlane):
                 self.conn_mgr.complete_operations(self.sess_hdl)
         except Exception as e:
             pass
-        
-        self.client.t_modify_ip_table_add_with_a_modify_ip(self.sess_hdl,self.dev_tgt, 
-                                        netec_t_modify_ip_match_spec_t(eg_intr_md_egress_port=136),   
-                                        netec_a_modify_ip_action_spec_t(action_ip=ipv4Addr_to_i32("10.0.0.3"),
-                                                                  action_mac=macAddr_to_string("68:91:d0:61:b4:c4")))
-        self.client.t_get_coeff_table_add_with_a_get_coeff(self.sess_hdl,self.dev_tgt,
-                                        netec_t_get_coeff_match_spec_t(ipv4_srcAddr=ipv4Addr_to_i32("10.0.0.4")),
-                                        netec_a_get_coeff_action_spec_t(action_coeff=237))
 
-        self.client.t_get_coeff_table_add_with_a_get_coeff(self.sess_hdl,self.dev_tgt,
-                                        netec_t_get_coeff_match_spec_t(ipv4_srcAddr=ipv4Addr_to_i32("10.0.0.5")),
-                                        netec_a_get_coeff_action_spec_t(action_coeff=33889))
-        self.client.t_get_coeff_table_add_with_a_get_coeff(self.sess_hdl,self.dev_tgt,
-                                        netec_t_get_coeff_match_spec_t(ipv4_srcAddr=ipv4Addr_to_i32("10.0.0.6")),
-                                        netec_a_get_coeff_action_spec_t(action_coeff=49594))
+        # t_modify_ip table
+        self.client.t_modify_ip_table_add_with_a_modify_ip(self.sess_hdl, self.dev_tgt,
+            netec_t_modify_ip_match_spec_t(eg_intr_md_egress_port=136),
+            netec_a_modify_ip_action_spec_t(
+                action_ip=ipv4Addr_to_i32("10.0.0.3"),
+                action_mac=macAddr_to_string("68:91:d0:61:b4:c4")
+            )
+        )
+        self.client.t_modify_ip_table_add_with_a_modify_ip(self.sess_hdl, self.dev_tgt,
+            netec_t_modify_ip_match_spec_t(eg_intr_md_egress_port=128),
+            netec_a_modify_ip_action_spec_t(
+                action_ip=ipv4Addr_to_i32("10.0.0.4"),
+                action_mac=macAddr_to_string("68:91:d0:61:12:3a")
+            )
+        )
+        self.client.t_modify_ip_table_add_with_a_modify_ip(self.sess_hdl, self.dev_tgt,
+            netec_t_modify_ip_match_spec_t(eg_intr_md_egress_port=144),
+            netec_a_modify_ip_action_spec_t(
+                action_ip=ipv4Addr_to_i32("10.0.0.5"),
+                action_mac=macAddr_to_string("68:91:d0:61:12:5a")
+            )
+        )
+        self.client.t_modify_ip_table_add_with_a_modify_ip(self.sess_hdl, self.dev_tgt,
+            netec_t_modify_ip_match_spec_t(eg_intr_md_egress_port=152),
+            netec_a_modify_ip_action_spec_t(
+                action_ip=ipv4Addr_to_i32("10.0.0.6"),
+                action_mac=macAddr_to_string("68:91:d0:61:12:4b")
+            )
+        )
+        # t_dn_rs_seq table
+        self.client.t_dn_rs_seq_add_with_a_dn_rs_seq(self.sess_hdl, self.dev_tgt,
+            netec_t_dn_rs_seq_spec_t(meta_dn_port_for_seq=128),
+            netec_a_dn_rs_seq_spec_t(action_dn_index(0))
+        )
+        self.client.t_dn_rs_seq_add_with_a_dn_rs_seq(self.sess_hdl, self.dev_tgt,
+            netec_t_dn_rs_seq_spec_t(meta_dn_port_for_seq=144),
+            netec_a_dn_rs_seq_spec_t(action_dn_index(1))
+        )
+        self.client.t_dn_rs_seq_add_with_a_dn_rs_seq(self.sess_hdl, self.dev_tgt,
+            netec_t_dn_rs_seq_spec_t(meta_dn_port_for_seq=152),
+            netec_a_dn_rs_seq_spec_t(action_dn_index(2))
+        )
+
+        # self.client.t_get_coeff_table_add_with_a_get_coeff(self.sess_hdl,self.dev_tgt,
+        #                                 netec_t_get_coeff_match_spec_t(ipv4_srcAddr=ipv4Addr_to_i32("10.0.0.4")),
+        #                                 netec_a_get_coeff_action_spec_t(action_coeff=237))
+
+        # self.client.t_get_coeff_table_add_with_a_get_coeff(self.sess_hdl,self.dev_tgt,
+        #                                 netec_t_get_coeff_match_spec_t(ipv4_srcAddr=ipv4Addr_to_i32("10.0.0.5")),
+        #                                 netec_a_get_coeff_action_spec_t(action_coeff=33889))
+        # self.client.t_get_coeff_table_add_with_a_get_coeff(self.sess_hdl,self.dev_tgt,
+        #                                 netec_t_get_coeff_match_spec_t(ipv4_srcAddr=ipv4Addr_to_i32("10.0.0.6")),
+        #                                 netec_a_get_coeff_action_spec_t(action_coeff=49594))
         count = 8
         for i in range(count):
             getattr(self.client,"t_log_add_%s_table_add_with_a_log_mod_%s" %(i,i))(self.sess_hdl,self.dev_tgt,eval("netec_t_log_add_%s_match_spec_t" % (i))(netec_type_=2))
-                                        
-        
+
+
         print "Configuring Mcast"
-    
+
         mc_sess_hdl = self.mc.mc_create_session()
         mgrp_hdl = self.mc.mc_mgrp_create(mc_sess_hdl, 0, 666)
         l1_hdl1 = self.mc.mc_node_create(mc_sess_hdl, 0, 1, set_port_map([128]), set_lag_map([]))
         l1_hdl2 = self.mc.mc_node_create(mc_sess_hdl, 0, 2, set_port_map([136]), set_lag_map([]))
         l1_hdl3 = self.mc.mc_node_create(mc_sess_hdl, 0, 3, set_port_map([144]), set_lag_map([]))
         l1_hdl4 = self.mc.mc_node_create(mc_sess_hdl, 0, 4, set_port_map([152]), set_lag_map([]))
-	    
-        #self.mc.mc_associate_node(mc_sess_hdl, 0, mgrp_hdl, l1_hdl1, 0, 0)
-        self.mc.mc_associate_node(mc_sess_hdl, 0, mgrp_hdl, l1_hdl2, 0, 0)
+
+        self.mc.mc_associate_node(mc_sess_hdl, 0, mgrp_hdl, l1_hdl1, 0, 0)
+        # self.mc.mc_associate_node(mc_sess_hdl, 0, mgrp_hdl, l1_hdl2, 0, 0)
         self.mc.mc_associate_node(mc_sess_hdl, 0, mgrp_hdl, l1_hdl3, 0, 0)
         self.mc.mc_associate_node(mc_sess_hdl, 0, mgrp_hdl, l1_hdl4, 0, 0)
         self.mc.mc_complete_operations(mc_sess_hdl)

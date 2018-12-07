@@ -24,8 +24,8 @@ limitations under the License.
 
 #define DN_COUNT 3
 
-#define CLIENT_PORT 128
-#define DN_PORT_1 136
+#define CLIENT_PORT 136
+#define DN_PORT_1 128
 #define DN_PORT_2 144
 #define DN_PORT_3 152
 
@@ -343,8 +343,8 @@ table t_dn_rs_seq{
 		/* ND's port number */
 		meta.dn_port_for_seq : exact;
 	}
-	actions{ a_dn_rs_seq; }
-	default_action : a_dn_rs_seq();
+	actions{ a_dn_rs_seq; a_nop; }
+	default_action : a_nop();
 }
 action a_dn_rs_seq(int dn_index){
 	s_rs_seq.execute_stateful_alu(dn_index);
@@ -373,6 +373,14 @@ table t_modify_ack_to_DNs{
 }
 action a_modify_ack_to_DNs(){
 	add_to_field(tcp.ACK, meta.dn_init_seq);
+}
+/* modify SEQ# for packets from DNs to client */
+table t_modify_seq_to_client{
+	acitons{ a_modify_seq_to_client; }
+	default_action : a_modify_seq_to_client();
+}
+action a_modify_seq_to_client(){
+	subtract_from_field(tcp.seqNo, meta.dn_init_seq);
 }
 
 table t_drop_table {
@@ -426,6 +434,10 @@ control egress {
 	if(tcp.dstPort == NETEC_DN_PORT && tcp.flags != TCP_FLAG_SYN){
 		/* packets from client, needs to modify ACK# */
 		apply(t_modify_ack_to_DNs);
+	}
+	/* modify SEQ# to match initial SEQ#(0) when sending data */
+	if(meta.flag_finish == 1){
+		apply(t_modify_seq_to_client);
 	}
 
 	/* modify dst_ip and dst_mac

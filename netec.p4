@@ -3,53 +3,53 @@ header_type netec_t{
 	fields {
 		type_ : 16;
 		index : 32 ;
-     
+
 		data_0 : 16;
-         
+
 		data_1 : 16;
-         
+
 		data_2 : 16;
-         
+
 		data_3 : 16;
-         
+
 		data_4 : 16;
-         
+
 		data_5 : 16;
-         
+
 		data_6 : 16;
-         
+
 		data_7 : 16;
-         
+
 	}
 }
 header netec_t netec;
-     
+
 field_list l4_with_netec_list {
 	ipv4.srcAddr;
     ipv4.dstAddr;
 	meta.l4_proto;
 	udp.srcPort;
-	udp.dstPort; 
+	udp.dstPort;
 	udp.length_;
 	netec_meta.index;
 	netec_meta.type_;
-     
+
 	netec_meta.res_0;
-     
+
 	netec_meta.res_1;
-     
+
 	netec_meta.res_2;
-     
+
 	netec_meta.res_3;
-     
+
 	netec_meta.res_4;
-     
+
 	netec_meta.res_5;
-     
+
 	netec_meta.res_6;
-     
+
 	netec_meta.res_7;
-     
+
 	meta.cksum_compensate;
 }
 field_list_calculation l4_with_netec_checksum {
@@ -62,7 +62,7 @@ field_list_calculation l4_with_netec_checksum {
 
 calculated_field udp.checksum  {
 	update l4_with_netec_checksum;
-} 
+}
 // AUTOGEN
 register r_xor_0{
 	width : 16;
@@ -81,7 +81,7 @@ table t_xor_0{
 action a_xor_0(){
 	s_xor_0.execute_stateful_alu(meta.index);
 }
-         
+
 // AUTOGEN
 register r_xor_1{
 	width : 16;
@@ -100,7 +100,7 @@ table t_xor_1{
 action a_xor_1(){
 	s_xor_1.execute_stateful_alu(meta.index);
 }
-         
+
 // AUTOGEN
 register r_xor_2{
 	width : 16;
@@ -119,7 +119,7 @@ table t_xor_2{
 action a_xor_2(){
 	s_xor_2.execute_stateful_alu(meta.index);
 }
-         
+
 // AUTOGEN
 register r_xor_3{
 	width : 16;
@@ -138,7 +138,7 @@ table t_xor_3{
 action a_xor_3(){
 	s_xor_3.execute_stateful_alu(meta.index);
 }
-         
+
 // AUTOGEN
 register r_xor_4{
 	width : 16;
@@ -157,7 +157,7 @@ table t_xor_4{
 action a_xor_4(){
 	s_xor_4.execute_stateful_alu(meta.index);
 }
-         
+
 // AUTOGEN
 register r_xor_5{
 	width : 16;
@@ -176,7 +176,7 @@ table t_xor_5{
 action a_xor_5(){
 	s_xor_5.execute_stateful_alu(meta.index);
 }
-         
+
 // AUTOGEN
 register r_xor_6{
 	width : 16;
@@ -195,7 +195,7 @@ table t_xor_6{
 action a_xor_6(){
 	s_xor_6.execute_stateful_alu(meta.index);
 }
-         
+
 // AUTOGEN
 register r_xor_7{
 	width : 16;
@@ -214,81 +214,81 @@ table t_xor_7{
 action a_xor_7(){
 	s_xor_7.execute_stateful_alu(meta.index);
 }
-         
+
 control xor {
-     
+
     apply(t_xor_0);
-     
+
     apply(t_xor_1);
-     
+
     apply(t_xor_2);
-     
+
     apply(t_xor_3);
-     
+
     apply(t_xor_4);
-     
+
     apply(t_xor_5);
-     
+
     apply(t_xor_6);
-     
+
     apply(t_xor_7);
-     
+
 }
-     
+
 action fill_netec_fields(){
-     
+
     modify_field(netec.data_0,netec_meta.res_0);
-     
+
     modify_field(netec.data_1,netec_meta.res_1);
-     
+
     modify_field(netec.data_2,netec_meta.res_2);
-     
+
     modify_field(netec.data_3,netec_meta.res_3);
-     
+
     modify_field(netec.data_4,netec_meta.res_4);
-     
+
     modify_field(netec.data_5,netec_meta.res_5);
-     
+
     modify_field(netec.data_6,netec_meta.res_6);
-     
+
     modify_field(netec.data_7,netec_meta.res_7);
-     
+
 }
-     
+
 header_type netec_meta_t{
 	fields{
         type_ : 16;
 
 		index : 32;
         temp : 16;
-     
+
         res_0 : 16;
         temp_0 : 32;
-         
+
         res_1 : 16;
         temp_1 : 32;
-         
+
         res_2 : 16;
         temp_2 : 32;
-         
+
         res_3 : 16;
         temp_3 : 32;
-         
+
         res_4 : 16;
         temp_4 : 32;
-         
+
         res_5 : 16;
         temp_5 : 32;
-         
+
         res_6 : 16;
         temp_6 : 32;
-         
+
         res_7 : 16;
         temp_7 : 32;
-         
+
     }
 }
-     
+
 
 register r_log_table_0{
 	width : 16;
@@ -355,7 +355,7 @@ action a_get_ilog_0(){
 	s_ilog_table_0.execute_stateful_alu(netec_meta.temp_0);
 }
 
-         
+
 
 register r_log_table_1{
 	width : 16;
@@ -422,7 +422,7 @@ action a_get_ilog_1(){
 	s_ilog_table_1.execute_stateful_alu(netec_meta.temp_1);
 }
 
-         
+
 
 register r_log_table_2{
 	width : 16;
@@ -489,7 +489,7 @@ action a_get_ilog_2(){
 	s_ilog_table_2.execute_stateful_alu(netec_meta.temp_2);
 }
 
-         
+
 
 register r_log_table_3{
 	width : 16;
@@ -556,7 +556,7 @@ action a_get_ilog_3(){
 	s_ilog_table_3.execute_stateful_alu(netec_meta.temp_3);
 }
 
-         
+
 
 register r_log_table_4{
 	width : 16;
@@ -623,7 +623,7 @@ action a_get_ilog_4(){
 	s_ilog_table_4.execute_stateful_alu(netec_meta.temp_4);
 }
 
-         
+
 
 register r_log_table_5{
 	width : 16;
@@ -690,7 +690,7 @@ action a_get_ilog_5(){
 	s_ilog_table_5.execute_stateful_alu(netec_meta.temp_5);
 }
 
-         
+
 
 register r_log_table_6{
 	width : 16;
@@ -757,7 +757,7 @@ action a_get_ilog_6(){
 	s_ilog_table_6.execute_stateful_alu(netec_meta.temp_6);
 }
 
-         
+
 
 register r_log_table_7{
 	width : 16;
@@ -824,64 +824,64 @@ action a_get_ilog_7(){
 	s_ilog_table_7.execute_stateful_alu(netec_meta.temp_7);
 }
 
-         
+
 control gf_multiply {
-     
+
         apply(t_get_log_0);
-         
+
         apply(t_get_log_1);
-         
+
         apply(t_get_log_2);
-         
+
         apply(t_get_log_3);
-         
+
         apply(t_get_log_4);
-         
+
         apply(t_get_log_5);
-         
+
         apply(t_get_log_6);
-         
+
         apply(t_get_log_7);
-         
+
         apply(t_log_add_0);
-         
+
         apply(t_log_add_1);
-         
+
         apply(t_log_add_2);
-         
+
         apply(t_log_add_3);
-         
+
         apply(t_log_add_4);
-         
+
         apply(t_log_add_5);
-         
+
         apply(t_log_add_6);
-         
+
         apply(t_log_add_7);
-         
+
         if(netec.data_0 != 0)
             apply(t_get_ilog_0);
-         
+
         if(netec.data_1 != 0)
             apply(t_get_ilog_1);
-         
+
         if(netec.data_2 != 0)
             apply(t_get_ilog_2);
-         
+
         if(netec.data_3 != 0)
             apply(t_get_ilog_3);
-         
+
         if(netec.data_4 != 0)
             apply(t_get_ilog_4);
-         
+
         if(netec.data_5 != 0)
             apply(t_get_ilog_5);
-         
+
         if(netec.data_6 != 0)
             apply(t_get_ilog_6);
-         
+
         if(netec.data_7 != 0)
             apply(t_get_ilog_7);
-         
+
 }
-    
+

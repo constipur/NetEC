@@ -23,7 +23,7 @@ header_type ipv4_t {
 	srcAddr : 32;
 	dstAddr: 32;
 	}
-} 
+}
 header_type udp_t {
     fields {
         srcPort : 16;
@@ -71,16 +71,15 @@ header_type tcp_t {
 		seqNo : 32;
 		ackNo : 32;
 		dataOffset : 4;
-        	res : 4;
-        	flags : 3;
-		ack: 1;
-		psh: 1;
-		rst: 1;
-		syn: 1;
-		fin: 1;		 
+        res : 6;
+        flags : 6;
 		window : 16;
 		checksum : 16;
 		urgentPtr : 16;
+		// dirty implementation
+		// tcp options
+		option_nop : 16;
+		option_ts : 80;
     }
 }
 header tcp_t tcp;
@@ -93,13 +92,13 @@ field_list udp_checksum_list {
         //ipv4.protocol;
         //meta.tcpLength;
         udp.srcPort;
-		udp.dstPort; 
+		udp.dstPort;
 		udp.length_;
 		meta.cksum_compensate;
 		meta.cksum_compensate;
 		meta.cksum_compensate;
 		//netec.index;
-		//netec.data;	
+		//netec.data;
         payload;
 }
 

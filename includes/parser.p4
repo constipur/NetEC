@@ -19,11 +19,11 @@ parser parse_ethernet {
 parser parse_ipv4 {
 	extract(ipv4);
 	return select(ipv4.protocol) {
-		//IP_PROT_TCP : parse_tcp;
+		IP_PROT_TCP : parse_tcp;
 		IP_PROT_UDP : parse_udp;
 		default: ingress;
 	}
-	
+
 }
 
 #define UDP_DPORT_NETEC 20000
@@ -35,6 +35,21 @@ parser parse_udp {
 		default: ingress;
 	}
 }
+
+/* server (sending data) port 20001 */
+#define TCP_SPORT_NETEC NETEC_DN_PORT
+parser parse_tcp {
+	extract(tcp);
+	set_metadata(meta.cksum_compensate,0);
+	return select(tcp.srcPort){
+		/* srcPort == 20001
+		 * carrying data
+		*/
+		TCP_SPORT_NETEC : parse_netec;
+		default: ingress;
+	}
+}
+
 
 parser parse_netec {
 	extract(netec);

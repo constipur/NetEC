@@ -1,7 +1,7 @@
 # Autogen xor buffer tables and related modules
 
 def main():
-    count = 8
+    count = 2
     print """
 header_type netec_t{
 	fields {
@@ -119,7 +119,7 @@ register r_log_table_%s{
 }
 register r_ilog_table_%s{
     width : 16;
-    instance_count : 131072;
+    instance_count : 65536;
 }
 
 table t_get_log_%s{
@@ -158,6 +158,25 @@ action a_log_add_%s(){
 action a_log_mod_%s(){
     modify_field(netec_meta.temp_%s,netec.index);
 }
+table t_ilog_index_%s{
+    reads{
+        netec_meta.temp_%s : lpm;
+        netec.type_:exact;
+    }
+    actions {
+        a_ilog_index_subtract_%s;
+        a_ilog_index_zero_%s;
+        nop;
+    }
+    default_action:nop;
+}
+action a_ilog_index_subtract_%s(){
+    subtract_from_field(netec_meta.temp_%s,65535);
+}
+action a_ilog_index_zero_%s(){
+    modify_field(netec.data_%s,0);
+}
+
 table t_get_ilog_%s{
 	actions{
 		a_get_ilog_%s;
@@ -178,7 +197,7 @@ action a_get_ilog_%s(){
 	s_ilog_table_%s.execute_stateful_alu(netec_meta.temp_%s);
 }
 
-        """ % (i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i),
+        """ % (i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i,i),
     print """
 control gf_multiply {
     """,
@@ -189,6 +208,10 @@ control gf_multiply {
     for i in range (count):
         print """
         apply(t_log_add_%s);
+        """ % (i),
+    for i in range (count):
+        print """
+        apply(t_ilog_index_%s);
         """ % (i),
     for i in range (count):
         print """

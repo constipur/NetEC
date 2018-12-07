@@ -70,6 +70,11 @@ def set_lag_map(indicies):
         bit_map[i/8] = (bit_map[i/8] | (1 << (i%8))) & 0xFF
     return bytes_to_string(bit_map)
 
+def u_int_2_int(i):
+    if i > 2147483647:
+        i = i - 4294967296
+    return i
+
 class L2Test(pd_base_tests.ThriftInterfaceDataPlane):
     def __init__(self):
         pd_base_tests.ThriftInterfaceDataPlane.__init__(self,
@@ -133,11 +138,21 @@ class L2Test(pd_base_tests.ThriftInterfaceDataPlane):
         self.client.t_get_coeff_table_add_with_a_get_coeff(self.sess_hdl,self.dev_tgt,
                                         netec_t_get_coeff_match_spec_t(ipv4_srcAddr=ipv4Addr_to_i32("10.0.0.6")),
                                         netec_a_get_coeff_action_spec_t(action_coeff=49594))
-        count = 8
+        count = 2
         for i in range(count):
             getattr(self.client,"t_log_add_%s_table_add_with_a_log_mod_%s" %(i,i))(self.sess_hdl,self.dev_tgt,eval("netec_t_log_add_%s_match_spec_t" % (i))(netec_type_=2))
-                                        
-        
+        print "tcam"                                
+        for i in range(count):
+            entry_hdl = getattr(self.client,"t_ilog_index_%s_table_add_with_a_ilog_index_subtract_%s" %(i,i))(self.sess_hdl,self.dev_tgt,eval("netec_t_ilog_index_%s_match_spec_t" % (i))(65536,16,0)) 
+            print entry_hdl
+            
+        for i in range(count):
+            getattr(self.client,"t_ilog_index_%s_table_add_with_a_ilog_index_zero_%s" %(i,i))(self.sess_hdl,self.dev_tgt,eval("netec_t_ilog_index_%s_match_spec_t" % (i))(131070,32,0))
+        for i in range(count):
+            getattr(self.client,"t_ilog_index_%s_table_add_with_a_ilog_index_zero_%s" %(i,i))(self.sess_hdl,self.dev_tgt,eval("netec_t_ilog_index_%s_match_spec_t" % (i))(131071,32,0))
+
+        self.conn_mgr.complete_operations(self.sess_hdl)
+
         print "Configuring Mcast"
     
         mc_sess_hdl = self.mc.mc_create_session()

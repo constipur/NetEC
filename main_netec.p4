@@ -13,7 +13,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
 // This is P4 sample source for basic_switching
 #include "netec.p4"
 #include "includes/headers.p4"
@@ -21,7 +20,6 @@ limitations under the License.
 #include <tofino/intrinsic_metadata.p4>
 #include <tofino/stateful_alu_blackbox.p4>
 #include <tofino/constants.p4>
-
 header_type custom_metadata_t {
 	fields {
 		forward:8;
@@ -42,10 +40,8 @@ header_type custom_metadata_t {
 }
 metadata custom_metadata_t meta;
 metadata netec_meta_t netec_meta;
-
 action nop() {
 }
-
 action _drop() {
     drop();
 }
@@ -81,6 +77,7 @@ action a_finish(){
 	s_finish.execute_stateful_alu(netec.index);
 }
 
+
 table t_cksum_compensate{
 	actions{a_cksum_compensate;}
 	default_action : a_cksum_compensate();
@@ -113,7 +110,6 @@ table t_get_coeff{
 	default_action:nop();
 }
 
-
 action a_get_coeff(coeff){
 	modify_field(meta.coeff,coeff);
 	modify_field(meta.temp,netec.data_0);//writing to ilog tables
@@ -131,6 +127,7 @@ action a_record(){
 	modify_field(ipv4.identification,netec_meta.temp_1);
 	//modify_field(ipv4.diffserv,netec_meta.temp_1);
 }
+
 
 
 control ingress {

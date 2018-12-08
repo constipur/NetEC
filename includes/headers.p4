@@ -76,10 +76,6 @@ header_type tcp_t {
 		window : 16;
 		checksum : 16;
 		urgentPtr : 16;
-		// dirty implementation
-		// tcp options
-		option_nop : 16;
-		option_ts : 80;
     }
 }
 header tcp_t tcp;

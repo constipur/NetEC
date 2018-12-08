@@ -22,7 +22,11 @@ limitations under the License.
 #define TCP_FLAG_PA 0x18
 #define IP_HEADER_LENGTH -20
 
+#define MSS_48_TCP_OPTION 0x02040030
+
 /* configuration */
+#define SWITCH_IP 0x0A00000A  /* 10.0.0.10 */
+
 #define NETEC_DN_PORT 20001
 
 #define DN_COUNT 3
@@ -49,7 +53,7 @@ header_type custom_metadata_t {
 		type_ : 16;
 		index : 32;
 		flag_finish : 1;
-		cksum_compensate : 16;
+		cksum_compensate : 32;
 		l4_proto : 16;
 		ttl_length : 16;
 		payload_csum : 16;
@@ -61,7 +65,7 @@ header_type custom_metadata_t {
 		/* for reading DN's initial SEQ# */
 		sa_from_dn : 1;
 		dn_init_seq : 32;
-		dn_port_for_seq : 8;
+		dn_port_for_seq : 32;
 		sa_finish : 1;
 	}
 }
@@ -106,17 +110,6 @@ action a_finish(){
 	s_finish.execute_stateful_alu(netec.index);
 }
 
-table t_cksum_compensate{
-	actions{ a_cksum_compensate; }
-	default_action : a_cksum_compensate();
-}
-action a_cksum_compensate(){
-	modify_field(meta.l4_proto, ipv4.protocol);
-	modify_field(netec_meta.index, netec.index);
-	modify_field(netec_meta.type_, netec.type_);
-	modify_field(meta.cksum_compensate, udp.length_); // The udp.length_ field mysteriously does not take affect.
-}
-
 table t_send_res{
 	actions{ a_send_res; }
 	default_action : a_send_res();
@@ -156,14 +149,29 @@ action a_record(){
 	// modify_field(ipv4.diffserv, netec_meta.temp_1);
 }
 
-/* calculate tcp length for checksum */
-table t_cal_tcp_length{
-	actions{ a_cal_tcp_length; }
-	default_action : a_cal_tcp_length();
+/* calculate tcp compensate
+ * tcp length
+ * netec index, type
+ * tcp options for SYN and SYNACK
+ */
+table t_cksum_compensate_1{
+	actions{ a_cksum_compensate_1; }
+	default_action : a_cksum_compensate_1();
 }
-action a_cal_tcp_length(){
+action a_cksum_compensate_1(){
 	add(meta.tcpLength, ipv4.totalLen, IP_HEADER_LENGTH/* negative */);
+	modify_field(meta.l4_proto, ipv4.protocol);
+	modify_field(netec_meta.index, netec.index);
+	modify_field(netec_meta.type_, netec.type_);
 }
+table t_cksum_compensate_2{
+	actions{ a_cksum_compensate_2; }
+	default_action : a_cksum_compensate_2();
+}
+action a_cksum_compensate_2(){
+	modify_field(meta.cksum_compensate, MSS_48_TCP_OPTION);
+}
+
 
 /* prepare paras for calculation */
 table t_prepare_paras{
@@ -224,13 +232,18 @@ blackbox stateful_alu s_sa_count{
 	output_dst : meta.sa_finish;
 }
 
-/* modify tcp.seq to 0 */
-table t_seq_zero{
-	actions{ a_seq_zero; }
-	default_action : a_seq_zero();
+/* modify tcp.seq to 0
+ * modify egress port to be CLIENT's port
+ * modify source ip address to be SWITCH_IP
+ */
+table t_send_sa{
+	actions{ a_send_sa; }
+	default_action : a_send_sa();
 }
-action a_seq_zero(){
+action a_send_sa(){
+	modify_field(ig_intr_md_for_tm.ucast_egress_port, CLIENT_PORT);
 	modify_field(tcp.seqNo, 0);
+	modify_field(ipv4.srcAddr, SWITCH_IP);
 }
 
 
@@ -256,9 +269,14 @@ action a_seq_zero(){
 /**************************************************/
 /**************** INGRESS pipeline ****************/
 control ingress {
-	/* calculate tcp length for checksum */
-	apply(t_cal_tcp_length);
-
+	if(valid(tcp)){
+		/* calculate tcp length for checksum */
+		apply(t_cksum_compensate_1);
+		if(tcp.flags == TCP_FLAG_SYN or tcp.flags == TCP_FLAG_SA){
+			/* TCP options */
+			apply(t_cksum_compensate_2);
+		}
+	}
 	if(tcp.dstPort == NETEC_DN_PORT){
 		/* packets from client
 		 * always multicast to all datanodes
@@ -274,17 +292,20 @@ control ingress {
 			 */
 		}
 		apply(t_multicast);
-	}
-	if(tcp.srcPort == NETEC_DN_PORT){
+	}else if(tcp.srcPort == NETEC_DN_PORT){
 		/* packets from DNs */
 		if(tcp.flags == TCP_FLAG_SA){
 			/* SYN + ACK */
 			apply(t_sa_count);
 			if(meta.sa_finish == 1){
-				apply(t_seq_zero);
+				apply(t_send_sa);
 			}
-		}
-		if(tcp.flags == TCP_FLAG_ACK and valid(netec)){
+			else{
+				/* no egress port set
+				 * will be dropped
+				 */
+			}
+		}else if(tcp.flags == TCP_FLAG_ACK and valid(netec)){
 			if(netec.type_ == 0){
 				/* data packets */
 				apply(t_prepare_paras);
@@ -292,10 +313,11 @@ control ingress {
 				apply(t_finish);
 				if(meta.flag_finish == 1){
 					apply(t_send_res);
-					apply(t_cksum_compensate);
 				}
 				else{
-					apply(t_drop_table);
+					/* no egress port set
+					 * will be dropped
+					 */
 				}
 			}
 		}
@@ -391,7 +413,7 @@ table t_modify_ack_to_DNs{
 action a_modify_ack_to_DNs(){
 	add_to_field(tcp.ackNo, meta.dn_init_seq);
 }
-/* modify SEQ# for packets from DNs to client */
+/* modify SEQ# for data packets from DNs to client */
 table t_modify_seq_to_client{
 	actions{ a_modify_seq_to_client; }
 	default_action : a_modify_seq_to_client();
@@ -400,13 +422,6 @@ action a_modify_seq_to_client(){
 	subtract_from_field(tcp.seqNo, meta.dn_init_seq);
 }
 
-table t_drop_table {
-	actions {
-		a_drop;
-	}
-	default_action : a_drop();
-	size : 1;
-}
 table t_modify_ip{
 	reads{
 		eg_intr_md.egress_port : exact;
@@ -452,7 +467,7 @@ control egress {
 		/* packets from client, needs to modify ACK# */
 		apply(t_modify_ack_to_DNs);
 	}
-	/* modify SEQ# to match initial SEQ#(0) when sending data */
+	/* modify SEQ# to match initial SEQ#(0) when sending data to client */
 	if(meta.flag_finish == 1){
 		apply(t_modify_seq_to_client);
 	}

@@ -6,11 +6,11 @@ def main():
 header_type netec_t{
 	fields {
 		type_ : 16;
-		index : 32 ;
+		index : 32;
 """,
     for i in range(count):
-        print """
-		data_%s : 16;""" % (i),
+        print """data_%s : 16;
+        """ % (i),
     print """
 	}
 }
@@ -39,8 +39,6 @@ field_list l4_with_netec_list_tcp {
 	ipv4.srcAddr;
     ipv4.dstAddr;
 	meta.l4_proto;
-    8'0;
-    ipv4.protocol;
     meta.tcpLength;
 	tcp.srcPort;
 	tcp.dstPort;
@@ -53,11 +51,10 @@ field_list l4_with_netec_list_tcp {
 	tcp.checksum;
 	tcp.urgentPtr;
 	netec_meta.index;
-	netec_meta.type_;
-""",
+	netec_meta.type_;""",
     for i in range(count):
-        print"""
-	netec_meta.res_%s;
+        print """
+    netec_meta.res_%s;
 """ %(i),
     print """
 	meta.cksum_compensate;
@@ -100,8 +97,7 @@ control xor {
 """,
     for i in range (count):
         s = """
-    apply(t_xor_%s);
-    """ % (i)
+    apply(t_xor_%s);""" % (i)
         print s,
     print """
 }
@@ -210,18 +206,16 @@ action a_get_ilog_%s(){
 control gf_multiply {
     """,
     for i in range (count):
-        print """
-        apply(t_get_log_%s);
-        """ % (i),
+        print """apply(t_get_log_%s);
+    """ % (i),
+    for i in range (count):
+        print """apply(t_log_add_%s);
+    """ % (i),
     for i in range (count):
         print """
-        apply(t_log_add_%s);
-        """ % (i),
-    for i in range (count):
-        print """
-        if(netec.data_%s != 0)
-            apply(t_get_ilog_%s);
-        """ % (i, i),
+    if(netec.data_%s != 0)
+        apply(t_get_ilog_%s);
+    """ % (i, i),
     print """
 }
 """,

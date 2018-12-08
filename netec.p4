@@ -48,8 +48,6 @@ field_list l4_with_netec_list_tcp {
 	ipv4.srcAddr;
     ipv4.dstAddr;
 	meta.l4_proto;
-    8'0;
-    ipv4.protocol;
     meta.tcpLength;
 	tcp.srcPort;
 	tcp.dstPort;
@@ -59,8 +57,8 @@ field_list l4_with_netec_list_tcp {
     tcp.res;
     tcp.flags;
 	tcp.window;
-	tcp.checksum;
 	tcp.urgentPtr;
+
 	netec_meta.index;
 	netec_meta.type_;
 

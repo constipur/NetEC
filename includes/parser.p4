@@ -41,11 +41,13 @@ parser parse_udp {
 parser parse_tcp {
 	extract(tcp);
 	set_metadata(meta.cksum_compensate, 0);
-	return select(tcp.srcPort){
+	return select(tcp.srcPort, tcp.flags){
 		/* srcPort == 20001
 		 * carrying data
 		*/
-		TCP_SPORT_NETEC : parse_netec;
+		TCP_SPORT_NETEC, TCP_FLAG_ACK : parse_netec;
+		TCP_SPORT_NETEC, TCP_FLAG_PA : parse_netec;
+		TCP_SPORT_NETEC, TCP_FLAG_SA : ingress;
 		default: ingress;
 	}
 }

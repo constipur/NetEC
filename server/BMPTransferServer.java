@@ -9,15 +9,18 @@ class ServerThread extends Thread{
     public static final int PACKET_AT_A_TIME = 10;
 
     private String fileName;
-    private int fieldCount, headerLength;
+    private int packetSize, headerLength, dataLength;
     private Socket socket;
     private DataOutputStream out;
     private InputStream fileIn;
 
-    public ServerThread(Socket s, String fileName, int fieldCount, int headerLength) throws IOException{
+    public ServerThread(Socket s, String fileName, int packetSize, int headerLength, int fieldCount) throws IOException{
         this.fileName = fileName;
-        this.fieldCount = fieldCount;
+        this.packetSize = packetSize;
         this.headerLength = headerLength;
+        this.dataLength = fieldCount * 2;
+        System.out.println("Packet size is: " + packetSize);
+        System.out.println("MSS at receiving side is supposed to be set to " + packetSize);
         socket = s;
         out = new DataOutputStream(socket.getOutputStream());
         System.out.println("Connection from " +
@@ -52,11 +55,6 @@ class ServerThread extends Thread{
         try{
             /* get file inputstream */
             fileIn = new FileInputStream(fileName);
-            /* calculate packet size */
-            int dataSize = fieldCount * 2;
-            int packetSize = headerLength + dataSize;
-            System.out.println("Packet size is: " + packetSize);
-            System.out.println("MSS at receiving side is supposed to be set to " + (packetSize + 12 /* tcp options */));
             int bufferSize = PACKET_AT_A_TIME * packetSize;
             byte[] buffer = new byte[bufferSize];
             int packetCount = 0;
@@ -65,7 +63,7 @@ class ServerThread extends Thread{
             while(true){
                 /* prepare data */
                 for(int i = 0;i < packetAtATime;i++){
-                    if(fileIn.read(buffer, i * packetSize + headerLength, dataSize) == -1){
+                    if(fileIn.read(buffer, i * packetSize + headerLength, dataLength) == -1){
                         if(i == 0)
                             /* no data to send */
                             throw new EOReadingFileException();
@@ -122,7 +120,7 @@ public class BMPTransferServer{
         this.serverPort = serverPort;
     }
 
-    public void startServer(String fileName, int fieldCount, int headerLength) throws IOException{
+    public void startServer(String fileName, int packetSize, int headerLength, int fieldCount) throws IOException{
         ServerSocket serverSocket = new ServerSocket(serverPort);
         System.out.println("Server started at port " + serverPort);
         try{
@@ -130,7 +128,7 @@ public class BMPTransferServer{
                 /* wait for connection */
                 Socket socket = serverSocket.accept();
                 try{
-                    new ServerThread(socket, fileName, fieldCount, headerLength);
+                    new ServerThread(socket, fileName, packetSize, headerLength, fieldCount);
                 }catch(IOException e){
                     System.out.println("Failed on creating ServerThread");
                     socket.close();
@@ -142,14 +140,15 @@ public class BMPTransferServer{
     }
 
     public static final int SERVER_PORT = 20001;
-    public static final String INPUT_FILE_NAME = "/home/kongxiao0532/thu/projects/netec-pdp/code/RS/blue.bmp";
-    public static final int FIELD_COUNT = 8;
+    public static final String INPUT_FILE_NAME = "/home/guest/qy/coding1.bmp";
+    public static final int PACKET_SIZE = 48;
     public static final int HEADER_LENGTH = 6;
+    public static final int FIELD_COUNT = 8;
 
     public static void main(String[] args) throws IOException, InterruptedException {
         BMPTransferServer server = new BMPTransferServer(SERVER_PORT);
         try{
-            server.startServer(INPUT_FILE_NAME, FIELD_COUNT, HEADER_LENGTH);
+            server.startServer(INPUT_FILE_NAME, PACKET_SIZE, HEADER_LENGTH, FIELD_COUNT);
         } catch(Exception e){
             e.printStackTrace();
         }

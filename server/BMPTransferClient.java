@@ -4,9 +4,10 @@ import java.net.*;
 public class BMPTransferClient{
 
     /* packet para */
+    static final int PACKET_SIZE = BMPTransferServer.PACKET_SIZE;
     static final int HEADER_LENGTH = BMPTransferServer.HEADER_LENGTH;
-    static final int FIELD_COUNT = BMPTransferServer.FIELD_COUNT;
-    static final int PKT_PER_RECV_BUFFER = 10;
+    static final int DATA_SIZE = BMPTransferServer.FIELD_COUNT * 2;
+    static final int PKT_PER_RECV_BUFFER = 20;
 
     class DataReadCompleteException extends Exception{
         public DataReadCompleteException(){
@@ -36,14 +37,14 @@ public class BMPTransferClient{
         /* receive data */
         byte[] image = new byte[fileSize];
         int pos = 0;
-        int dataLength = 2 * FIELD_COUNT;
-        int packetLength = HEADER_LENGTH + dataLength;
+        int packetSize = PACKET_SIZE;
+        int dataLength = DATA_SIZE;
         int packetPerBuffer = PKT_PER_RECV_BUFFER;
-        int buffersize = packetPerBuffer * packetLength;
+        int bufferSize = packetPerBuffer * packetSize;
 
         try{
             while(true){
-                byte[] byteBuffer = new byte[buffersize];
+                byte[] byteBuffer = new byte[bufferSize];
                 int readLength = 0;
                 /* read from inputstream */
                 readLength = in.read(byteBuffer);
@@ -54,13 +55,13 @@ public class BMPTransferClient{
                     if(pos + dataLength > fileSize){
                         /* arraycopy(src, srcPos, dest, destPos, length) */
                         /* should contain payload less than dataLength */
-                        System.arraycopy(byteBuffer, packetLength * i + HEADER_LENGTH, image, pos, fileSize - pos);
+                        System.arraycopy(byteBuffer, packetSize * i + HEADER_LENGTH, image, pos, fileSize - pos);
                         /* stop receiving data */
                         throw new DataReadCompleteException();
                     }
                     else{
                         /* should contain payload equal to dataLength */
-                        System.arraycopy(byteBuffer,  packetLength * i + HEADER_LENGTH, image, pos, dataLength);
+                        System.arraycopy(byteBuffer,  packetSize * i + HEADER_LENGTH, image, pos, dataLength);
                         pos += dataLength;
                     }
                 }
@@ -94,7 +95,7 @@ public class BMPTransferClient{
     }
 
     /* server info */
-    public static final String SERVER_ADDR_STR = "192.168.1.2";
+    public static final String SERVER_ADDR_STR = "10.0.0.10";
     public static final int SERVER_PORT = BMPTransferServer.SERVER_PORT;
     /* file config */
     static final int FILE_SIZE = 80454;

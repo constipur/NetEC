@@ -205,7 +205,8 @@ class L2Test(pd_base_tests.ThriftInterfaceDataPlane):
         hw_sync_flag = netec_register_flags_t(read_hw_sync = True)
         while(True):
             a = int(input())
-            print self.client.register_read_r_dn_rs_seq(self.sess_hdl,self.dev_tgt, a,hw_sync_flag);
+            # print self.client.register_read_r_finish(self.sess_hdl,self.dev_tgt, a,hw_sync_flag)
+            print self.client.register_read_r_test(self.sess_hdl,self.dev_tgt, 0, hw_sync_flag)
 
             # pass
         # ilog table

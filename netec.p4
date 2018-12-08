@@ -2,7 +2,7 @@
 header_type netec_t{
 	fields {
 		type_ : 16;
-		index : 32 ;
+		index : 32;
 
 		data_0 : 16; 
 		data_1 : 16; 
@@ -90,6 +90,7 @@ field_list_calculation l4_with_netec_checksum {
 
 calculated_field tcp.checksum  {
 	update l4_with_netec_checksum;
+	verify l4_with_netec_checksum;
 } 
 // AUTOGEN
 register r_xor_0{

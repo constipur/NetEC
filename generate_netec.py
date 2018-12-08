@@ -69,6 +69,7 @@ field_list_calculation l4_with_netec_checksum {
 
 calculated_field tcp.checksum  {
 	update l4_with_netec_checksum;
+	verify l4_with_netec_checksum;
 }""",
     for i in range(count):
         s = """

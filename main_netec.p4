@@ -258,6 +258,22 @@ action a_set_drop_in_egress_table(){
 	modify_field(meta.to_drop_in_egress, 1);
 }
 
+register r_test{
+	width : 8;
+	instance_count : 1;
+}
+table t_test{
+	actions{ a_test; }
+	default_action : a_test();
+}
+action a_test(){
+	s_test.execute_stateful_alu(0);
+}
+blackbox stateful_alu s_test{
+	reg : r_test;
+	update_lo_1_value : 1;
+}
+
 
 /************************ BEHAVIOR ************************
  * packets from CLIENT to DN:
@@ -319,6 +335,7 @@ control ingress {
 				apply(t_set_drop_in_egress_table);
 			}
 		}else if(valid(netec)){
+			apply(t_test);
 			if(netec.type_ == 0){
 				/* data packets */
 				apply(t_prepare_paras);

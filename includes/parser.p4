@@ -37,18 +37,20 @@ parser parse_udp {
 }
 
 /* server (sending data) port 20001 */
-#define TCP_SPORT_NETEC NETEC_DN_PORT
 parser parse_tcp {
 	extract(tcp);
 	set_metadata(meta.cksum_compensate, 0);
-	return select(tcp.srcPort, tcp.flags){
-		/* srcPort == 20001
-		 * carrying data
-		*/
-		TCP_SPORT_NETEC, TCP_FLAG_ACK : parse_netec;
-		TCP_SPORT_NETEC, TCP_FLAG_PA : parse_netec;
-		TCP_SPORT_NETEC, TCP_FLAG_SA : ingress;
+	return select(tcp.srcPort){
+		NETEC_DN_PORT : pre_parse_netec;
 		default: ingress;
+	}
+}
+
+parser pre_parse_netec {
+	return select(tcp.flags){
+		TCP_FLAG_ACK : parse_netec;
+		TCP_FLAG_PA: parse_netec;
+		TCP_FLAG_SA : ingress;
 	}
 }
 

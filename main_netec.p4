@@ -67,6 +67,8 @@ header_type custom_metadata_t {
 		dn_init_seq : 32;
 		dn_port_for_seq : 32;
 		sa_finish : 1;
+		tcp_seq_no : 32;
+		to_drop_in_egress : 1;
 	}
 }
 metadata custom_metadata_t meta;
@@ -161,6 +163,7 @@ table t_cksum_compensate_1{
 action a_cksum_compensate_1(){
 	add(meta.tcpLength, ipv4.totalLen, IP_HEADER_LENGTH/* negative */);
 	modify_field(meta.l4_proto, ipv4.protocol);
+	modify_field(meta.tcp_seq_no, tcp.seqNo);
 	modify_field(netec_meta.index, netec.index);
 	modify_field(netec_meta.type_, netec.type_);
 }
@@ -246,6 +249,15 @@ action a_send_sa(){
 	modify_field(ipv4.srcAddr, SWITCH_IP);
 }
 
+table t_set_drop_in_egress_table{
+	actions{ a_set_drop_in_egress_table; }
+	default_action : a_set_drop_in_egress_table();
+}
+action a_set_drop_in_egress_table(){
+	modify_field(ig_intr_md_for_tm.ucast_egress_port, 136);
+	modify_field(meta.to_drop_in_egress, 1);
+}
+
 
 /************************ BEHAVIOR ************************
  * packets from CLIENT to DN:
@@ -301,11 +313,12 @@ control ingress {
 				apply(t_send_sa);
 			}
 			else{
-				/* no egress port set
-				 * will be dropped
+				/* to-be-dropped packets also need to
+				 * get into egress pipeline
 				 */
+				apply(t_set_drop_in_egress_table);
 			}
-		}else if(tcp.flags == TCP_FLAG_ACK and valid(netec)){
+		}else if(valid(netec)){
 			if(netec.type_ == 0){
 				/* data packets */
 				apply(t_prepare_paras);
@@ -315,9 +328,10 @@ control ingress {
 					apply(t_send_res);
 				}
 				else{
-					/* no egress port set
-					 * will be dropped
+					/* to-be-dropped packets also need to
+					 * get into egress pipeline
 					 */
+					apply(t_set_drop_in_egress_table);
 				}
 			}
 		}
@@ -397,7 +411,7 @@ blackbox stateful_alu s_rs_seq{
 	condition_lo : meta.sa_from_dn == 1;
 	/* if TCP SYN+ACK from DN, store seq# */
 	update_lo_1_predicate : condition_lo;
-	update_lo_1_value : tcp.seqNo;
+	update_lo_1_value : meta.tcp_seq_no;
 	/* else, read only */
 	update_lo_2_predicate : not condition_lo;
 	update_lo_2_value : register_lo;
@@ -433,6 +447,10 @@ table t_modify_ip{
 action a_modify_ip(ip, mac){
 	modify_field(ipv4.dstAddr, ip);
 	modify_field(ethernet.dstAddr, mac);
+}
+table t_drop_table{
+	actions{ a_drop; }
+	default_action : a_drop();
 }
 
 /*************************************************/
@@ -475,7 +493,11 @@ control egress {
 	/* modify dst_ip and dst_mac
 	 * according to egress port
 	 */
-	apply(t_modify_ip);
+	if(meta.to_drop_in_egress == 0){
+		apply(t_modify_ip);
+	}else{
+		apply(t_drop_table);
+	}
 }
 
 

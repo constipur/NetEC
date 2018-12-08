@@ -204,7 +204,10 @@ class L2Test(pd_base_tests.ThriftInterfaceDataPlane):
 		#self.client.bypass2_set_default_action_bypass2_action(self.sess_hdl,self.dev_tgt);
         hw_sync_flag = netec_register_flags_t(read_hw_sync = True)
         while(True):
-            pass
+            a = int(input())
+            print self.client.register_read_r_dn_rs_seq(self.sess_hdl,self.dev_tgt, a,hw_sync_flag);
+
+            # pass
         # ilog table
         # while(True):
         #     index = int(input("index: "))

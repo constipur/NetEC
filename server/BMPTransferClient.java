@@ -49,9 +49,9 @@ public class BMPTransferClient{
                 /* read from inputstream */
                 readLength = in.read(byteBuffer);
                 System.out.println(readLength + " bytes read!");
-                if(readLength == -1)
-                    break;
-                for(int i = 0;i < packetPerBuffer;i++){
+                // if(readLength == -1)
+                //     break;
+                for(int i = 0;i < readLength / packetSize;i++){
                     if(pos + dataLength > fileSize){
                         /* arraycopy(src, srcPos, dest, destPos, length) */
                         /* should contain payload less than dataLength */

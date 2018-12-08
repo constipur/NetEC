@@ -118,6 +118,7 @@ table t_send_res{
 }
 action a_send_res(){
 	modify_field(ig_intr_md_for_tm.ucast_egress_port, CLIENT_PORT);
+	modify_field(ipv4.srcAddr, SWITCH_IP);
 	fill_netec_fields();
 }
 

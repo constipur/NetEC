@@ -96,7 +96,7 @@ register r_xor_0{
 }
 blackbox stateful_alu s_xor_0{
 	reg : r_xor_0;
-    condition_lo : meta.finish_flag == 1;
+    condition_lo : meta.flag_finish == 1;
     update_lo_1_predicate : condition_lo; /* the third packet */
 	update_lo_1_value : 0;
     update_lo_1_predicate : not condition_lo; /* the first/second packet */
@@ -121,7 +121,7 @@ register r_xor_1{
 }
 blackbox stateful_alu s_xor_1{
 	reg : r_xor_1;
-    condition_lo : meta.finish_flag == 1;
+    condition_lo : meta.flag_finish == 1;
     update_lo_1_predicate : condition_lo; /* the third packet */
 	update_lo_1_value : 0;
     update_lo_1_predicate : not condition_lo; /* the first/second packet */
@@ -146,7 +146,7 @@ register r_xor_2{
 }
 blackbox stateful_alu s_xor_2{
 	reg : r_xor_2;
-    condition_lo : meta.finish_flag == 1;
+    condition_lo : meta.flag_finish == 1;
     update_lo_1_predicate : condition_lo; /* the third packet */
 	update_lo_1_value : 0;
     update_lo_1_predicate : not condition_lo; /* the first/second packet */
@@ -171,7 +171,7 @@ register r_xor_3{
 }
 blackbox stateful_alu s_xor_3{
 	reg : r_xor_3;
-    condition_lo : meta.finish_flag == 1;
+    condition_lo : meta.flag_finish == 1;
     update_lo_1_predicate : condition_lo; /* the third packet */
 	update_lo_1_value : 0;
     update_lo_1_predicate : not condition_lo; /* the first/second packet */
@@ -196,7 +196,7 @@ register r_xor_4{
 }
 blackbox stateful_alu s_xor_4{
 	reg : r_xor_4;
-    condition_lo : meta.finish_flag == 1;
+    condition_lo : meta.flag_finish == 1;
     update_lo_1_predicate : condition_lo; /* the third packet */
 	update_lo_1_value : 0;
     update_lo_1_predicate : not condition_lo; /* the first/second packet */
@@ -221,7 +221,7 @@ register r_xor_5{
 }
 blackbox stateful_alu s_xor_5{
 	reg : r_xor_5;
-    condition_lo : meta.finish_flag == 1;
+    condition_lo : meta.flag_finish == 1;
     update_lo_1_predicate : condition_lo; /* the third packet */
 	update_lo_1_value : 0;
     update_lo_1_predicate : not condition_lo; /* the first/second packet */
@@ -246,7 +246,7 @@ register r_xor_6{
 }
 blackbox stateful_alu s_xor_6{
 	reg : r_xor_6;
-    condition_lo : meta.finish_flag == 1;
+    condition_lo : meta.flag_finish == 1;
     update_lo_1_predicate : condition_lo; /* the third packet */
 	update_lo_1_value : 0;
     update_lo_1_predicate : not condition_lo; /* the first/second packet */
@@ -271,7 +271,7 @@ register r_xor_7{
 }
 blackbox stateful_alu s_xor_7{
 	reg : r_xor_7;
-    condition_lo : meta.finish_flag == 1;
+    condition_lo : meta.flag_finish == 1;
     update_lo_1_predicate : condition_lo; /* the third packet */
 	update_lo_1_value : 0;
     update_lo_1_predicate : not condition_lo; /* the first/second packet */

@@ -78,7 +78,7 @@ register r_xor_%s{
 }
 blackbox stateful_alu s_xor_%s{
 	reg : r_xor_%s;
-    condition_lo : meta.finish_flag == 1;
+    condition_lo : meta.flag_finish == 1;
     update_lo_1_predicate : condition_lo; /* the third packet */
 	update_lo_1_value : 0;
     update_lo_1_predicate : not condition_lo; /* the first/second packet */

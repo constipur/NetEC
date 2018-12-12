@@ -86,7 +86,7 @@ class ServerThread extends Thread{
                 /* prepare header */
                 for(int i = 0;i < packetAtATime;i++){
                     byte[] type = short2byte((short)(0));
-                    byte[] index = intToByteArray(packetCount + i);
+                    byte[] index = intToByteArray((packetCount + i) % 65535);
                     /* arraycopy(src, srcPos, dest, destPos, length) */
                     System.arraycopy(type, 0, buffer,  packetSize * i, 2);
                     System.arraycopy(index, 0, buffer, packetSize * i + 2, 4);
@@ -138,7 +138,7 @@ public class BMPTransferServer{
                 /* wait for connection */
                 Socket socket = serverSocket.accept();
                 try{
-                    new ServerThread(socket, fileName, packetSize, headerLength, fieldCount);
+                    new ServerThread(socket, fileName, packetSize, headerLength, fieldCount, sendSingleFile);
                 }catch(IOException e){
                     System.out.println("Failed on creating ServerThread");
                     socket.close();
@@ -150,7 +150,7 @@ public class BMPTransferServer{
     }
 
     public static final int SERVER_PORT = 20001;
-    public static final String INPUT_FILE_NAME = "/home/guest/qy/coding1.bmp";
+    public static final String INPUT_FILE_NAME = "/home/guest/netec-java/blue.bmp";
     public static final int PACKET_SIZE = 48;
     public static final int HEADER_LENGTH = 6;
     public static final int FIELD_COUNT = 8;

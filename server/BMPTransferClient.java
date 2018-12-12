@@ -25,6 +25,17 @@ public class BMPTransferClient{
         this.serverPort = serverPort;
     }
 
+    private class NetSpeedTimerTask extends TimerTask{
+        public long readinSize = 0, lastReadinSize = 0;
+        @Override
+        public void run() {
+            /* every 1 sec */
+            long speed = readinSize - lastReadinSize;
+            System.out.print("Current receiving speed is " + speed / 1024 / 1024 * 8 + "Mbps\n");
+            lastReadinSize = readinSize;
+        }
+    }
+
     public void getInfiniteData() throws IOException{
         InetAddress serverAddr = InetAddress.getByName(serverAddrStr);
         System.out.println("Target server: " + serverAddr + ":" + serverPort);
@@ -36,26 +47,20 @@ public class BMPTransferClient{
         /* get in stream */
         DataInputStream in = new DataInputStream(socket.getInputStream());
 
+        int packetSize = PACKET_SIZE;
+        int dataLength = DATA_SIZE;
+        int packetPerBuffer = PKT_PER_RECV_BUFFER;
         int bufferSize = packetPerBuffer * packetSize;
-        long readinSize = 0, lastReadinSize = 0;
 
-        Timer speedoTimer = Timer(true);
-        TimerTask speedoTask = new TimerTask(){
-            @Override
-            public void run() {
-                /* every 1 sec */
-                float speed = readinSize - lastReadinSize;
-                System.out.print("Current receiving speed is " + speed / 1024 / 1024 * 8 + "Mbps");
-                lastReadinSize = readinSize;
-            }
-        };
+        Timer speedoTimer = new Timer(true);
+        NetSpeedTimerTask speedoTask = new NetSpeedTimerTask();
 
         try{
             speedoTimer.schedule(speedoTask, 0, 1000);
             while(true){
                 byte[] byteBuffer = new byte[bufferSize];
                 /* read from inputstream */
-                readinSize += in.read(byteBuffer);
+                speedoTask.readinSize += in.read(byteBuffer);
             }
         }catch(Exception e){
             e.printStackTrace();

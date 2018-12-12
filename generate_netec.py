@@ -5,12 +5,11 @@ def main():
     print """
 header_type netec_t{
 	fields {
-		type_ : 16;
-		index : 32;
-""",
+        type_ : 16;
+		index : 32;""",
     for i in range(count):
-        print """data_%s : 16;
-        """ % (i),
+        print """
+        data_%s : 16;""" % (i),
     print """
 	}
 }
@@ -48,7 +47,6 @@ field_list l4_with_netec_list_tcp {
     tcp.res;
     tcp.flags;
 	tcp.window;
-	tcp.checksum;
 	tcp.urgentPtr;
 	netec_meta.index;
 	netec_meta.type_;""",
@@ -80,8 +78,14 @@ register r_xor_%s{
 }
 blackbox stateful_alu s_xor_%s{
 	reg : r_xor_%s;
+    condition_lo : meta.finish_flag == 1;
+    update_lo_1_predicate : condition_lo; /* the third packet */
+	update_lo_1_value : 0;
+    update_lo_1_predicate : not condition_lo; /* the first/second packet */
 	update_lo_1_value : register_lo ^ netec.data_%s;
-	output_value : alu_lo;
+
+    update_hi_1_value : register_lo ^ netec.data_%s;
+	output_value : alu_hi;
 	output_dst : netec_meta.res_%s;
 }
 table t_xor_%s{
@@ -91,7 +95,7 @@ table t_xor_%s{
 action a_xor_%s(){
 	s_xor_%s.execute_stateful_alu(meta.index);
 }
-""" % (i, i, i, i, i, i, i, i, i, i)
+""" % (i, i, i, i, i, i, i, i, i, i, i)
         print s,
     print """
 control xor {

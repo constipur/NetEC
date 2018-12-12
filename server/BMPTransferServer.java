@@ -13,12 +13,14 @@ class ServerThread extends Thread{
     private Socket socket;
     private DataOutputStream out;
     private InputStream fileIn;
+    private boolean sendSingleFile;
 
-    public ServerThread(Socket s, String fileName, int packetSize, int headerLength, int fieldCount) throws IOException{
+    public ServerThread(Socket s, String fileName, int packetSize, int headerLength, int fieldCount, boolean sendSingleFile) throws IOException{
         this.fileName = fileName;
         this.packetSize = packetSize;
         this.headerLength = headerLength;
         this.dataLength = fieldCount * 2;
+        this.sendSingleFile = sendSingleFile;
         System.out.println("Packet size is: " + packetSize);
         System.out.println("MSS at receiving side is supposed to be set to " + packetSize);
         socket = s;
@@ -64,12 +66,20 @@ class ServerThread extends Thread{
                 /* prepare data */
                 for(int i = 0;i < packetAtATime;i++){
                     if(fileIn.read(buffer, i * packetSize + headerLength, dataLength) == -1){
-                        if(i == 0)
-                            /* no data to send */
-                            throw new EOReadingFileException();
-                        else{
-                            packetAtATime = i;
-                            break;
+                        if(sendSingleFile){
+                            /* all data has been read */
+                            if(i == 0)
+                                /* no data to send */
+                                throw new EOReadingFileException();
+                            else{
+                                /* a few left to send */
+                                packetAtATime = i;
+                                break;
+                            }
+                        }else{
+                            fileIn.close();
+                            fileIn = new FileInputStream(fileName);
+                            continue;
                         }
                     }
                 }
@@ -120,7 +130,7 @@ public class BMPTransferServer{
         this.serverPort = serverPort;
     }
 
-    public void startServer(String fileName, int packetSize, int headerLength, int fieldCount) throws IOException{
+    public void startServer(String fileName, int packetSize, int headerLength, int fieldCount, boolean sendSingleFile) throws IOException{
         ServerSocket serverSocket = new ServerSocket(serverPort);
         System.out.println("Server started at port " + serverPort);
         try{
@@ -148,7 +158,7 @@ public class BMPTransferServer{
     public static void main(String[] args) throws IOException, InterruptedException {
         BMPTransferServer server = new BMPTransferServer(SERVER_PORT);
         try{
-            server.startServer(INPUT_FILE_NAME, PACKET_SIZE, HEADER_LENGTH, FIELD_COUNT);
+            server.startServer(INPUT_FILE_NAME, PACKET_SIZE, HEADER_LENGTH, FIELD_COUNT, false/* send continuously */);
         } catch(Exception e){
             e.printStackTrace();
         }

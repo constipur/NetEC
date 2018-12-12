@@ -340,8 +340,11 @@ control ingress {
 			if(netec.type_ == 0){
 				/* data packets */
 				apply(t_prepare_paras);
-				xor();
+				/* set finish flag */
 				apply(t_finish);
+				/* calculate */
+				xor();
+				/* if finish, fill in data and send out */
 				if(meta.flag_finish == 1){
 					apply(t_send_res);
 				}

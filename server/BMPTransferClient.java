@@ -60,7 +60,7 @@ public class BMPTransferClient{
             while(true){
                 byte[] byteBuffer = new byte[bufferSize];
                 /* read from inputstream */
-                speedoTask.readinSize += in.read(byteBuffer);
+                speedoTask.readinSize += in.read(byteBuffer) / packetSize * dataLength;
             }
         }catch(Exception e){
             e.printStackTrace();

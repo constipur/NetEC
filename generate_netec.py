@@ -1,7 +1,7 @@
 # Autogen xor buffer tables and related modules
 
 def main():
-    count = 8
+    count = 45
     print """
 header_type netec_t{
 	fields {
@@ -9,7 +9,7 @@ header_type netec_t{
 		index : 32;""",
     for i in range(count):
         print """
-        data_%s : 16;""" % (i),
+        data_%s : 32;""" % (i),
     print """
 	}
 }
@@ -130,98 +130,11 @@ header_type netec_meta_t{
 """,
     for i in range(count):
         print """
-        res_%s : 16;
-        temp_%s : 32;
+        res_%s : 32;
+        // temp_%s : 32;
 """ % (i, i),
     print """
     }
-}
-""",
-
-    for i in range(count):
-        print """
-
-register r_log_table_%s{
-	width : 16;
-	instance_count : 65536;
-}
-register r_ilog_table_%s{
-    width : 16;
-    instance_count : 131072;
-}
-
-table t_get_log_%s{
-	actions{
-		a_get_log_%s;
-	}
-	default_action : a_get_log_%s;
-}
-blackbox stateful_alu s_log_table_%s{
-	reg : r_log_table_%s;
-    condition_lo : netec.type_ == 1;
-    update_lo_1_predicate: condition_lo;
-	update_lo_1_value : meta.temp2;
-    update_lo_2_predicate: not condition_lo;
-	update_lo_2_value : register_lo;
-	output_value : register_lo;
-	output_dst : netec_meta.temp_%s;
-}
-action a_get_log_%s(){
-	s_log_table_%s.execute_stateful_alu(netec.data_%s);
-}
-table t_log_add_%s{
-    reads{
-        netec.type_ : exact;
-    }
-	actions{
-		a_log_add_%s;
-		a_log_mod_%s;
-	}
-	default_action : a_log_add_%s();
-}
-action a_log_add_%s(){
-	add_to_field(netec_meta.temp_%s, meta.coeff);
-}
-
-action a_log_mod_%s(){
-    modify_field(netec_meta.temp_%s, netec.index);
-}
-table t_get_ilog_%s{
-	actions{
-		a_get_ilog_%s;
-	}
-	default_action : a_get_ilog_%s;
-}
-blackbox stateful_alu s_ilog_table_%s{
-	reg : r_ilog_table_%s;
-    condition_lo: netec.type_ == 2;
-    update_lo_1_predicate : condition_lo;
-	update_lo_1_value : meta.temp;
-    update_lo_2_predicate : not condition_lo;
-	update_lo_2_value : register_lo;
-	output_value : register_lo;
-	output_dst : netec.data_%s;
-}
-action a_get_ilog_%s(){
-	s_ilog_table_%s.execute_stateful_alu(netec_meta.temp_%s);
-}
-
-""" % (i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i),
-    print """
-control gf_multiply {
-    """,
-    for i in range (count):
-        print """apply(t_get_log_%s);
-    """ % (i),
-    for i in range (count):
-        print """apply(t_log_add_%s);
-    """ % (i),
-    for i in range (count):
-        print """
-    if(netec.data_%s != 0)
-        apply(t_get_ilog_%s);
-    """ % (i, i),
-    print """
 }
 """,
 

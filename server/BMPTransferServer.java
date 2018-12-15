@@ -151,9 +151,9 @@ public class BMPTransferServer{
 
     public static final int SERVER_PORT = 20001;
     public static final String INPUT_FILE_NAME = "/home/guest/netec-java/blue.bmp";
-    public static final int PACKET_SIZE = 70;
+    public static final int PACKET_SIZE = 166;
     public static final int HEADER_LENGTH = 6;
-    public static final int FIELD_COUNT = 16;
+    public static final int FIELD_COUNT = 40;
 
     public static void main(String[] args) throws IOException, InterruptedException {
         BMPTransferServer server = new BMPTransferServer(SERVER_PORT);

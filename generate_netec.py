@@ -1,70 +1,83 @@
 # Autogen xor buffer tables and related modules
 
-def main():
-    count = 16
-    data_width = 32
+data_count_per_header = 42
 
+def netec_data_instance_name(index):
+    if index < data_count_per_header:
+        return "netec.data_%s" % index
+    elif index >= data_count_per_header:
+        return "netec_%s.data_%s" % (index / data_count_per_header + 1, index)
+
+def print_header(count, data_width):
     print """
 header_type netec_t{
-	fields {
-        type_ : 16;
-		index : 32;""",
-    for i in range(count):
-        print """
-        data_%s : %s;""" % (i, data_width),
+\tfields {
+\t\ttype_ : 16;
+\t\tindex : 32;\n"""
+
+    for i in range(min(count, data_count_per_header)):
+        print """\t\tdata_%s : %s;\n""" % (i, data_width),
     print """
-	}
+\t}
 }
 header netec_t netec;
-""",
+"""
 
+    for i in range(2, (count - 1) / data_count_per_header + 2):
+        print """
+header_type netec_%s_t{
+    fields {""" % i
+        for j in range(data_count_per_header * (i - 1), count):
+            print """\t\tdata_%s : %s;\n""" % (j, data_width),
+        print """\t}\n}"""
+
+        print """header netec_%s_t netec_%s;\n""" % (i, i)
+
+def print_checksum(count):
+    # udp
     print """
 field_list l4_with_netec_list_udp {
-	ipv4.srcAddr;
-    ipv4.dstAddr;
-	//TOFINO: A bug about alignments, the eight zeroes seem not working. We comment out the protocol field (often unchanged) to get around this bug. The TCP checksum now works fine.
-    //8'0;
-    //ipv4.protocol;
-	meta.l4_proto;
-	udp.srcPort;
-	udp.dstPort;
-	udp.length_;
-	netec.index;
-	netec.type_;
-""",
+\tipv4.srcAddr;
+\tipv4.dstAddr;
+\t//TOFINO: A bug about alignments, the eight zeroes seem not working. We comment out the protocol field (often unchanged) to get around this bug. The TCP checksum now works fine.
+\t//8'0;
+\t//ipv4.protocol;
+\tmeta.l4_proto;
+\tudp.srcPort;
+\tudp.dstPort;
+\tudp.length_;
+\tnetec.index;
+\tnetec.type_;
+"""
 
     for i in range(count):
-        print"""
-	netec.data_%s;""" %(i),
+        print """\t%s;""" % netec_data_instance_name(i)
 
-    print """
-	meta.cksum_compensate;
-}""",
+    print """\tmeta.cksum_compensate;\n}"""
 
+    # tcp
     print """
 field_list l4_with_netec_list_tcp {
-	ipv4.srcAddr;
-    ipv4.dstAddr;
-	meta.l4_proto;
-    meta.tcpLength;
-	tcp.srcPort;
-	tcp.dstPort;
-    tcp.seqNo;
-    tcp.ackNo;
-	tcp.dataOffset;
-    tcp.res;
-    tcp.flags;
-	tcp.window;
-	tcp.urgentPtr;
-	netec.index;
-	netec.type_;""",
+\tipv4.srcAddr;
+\tipv4.dstAddr;
+\tmeta.l4_proto;
+\tmeta.tcpLength;
+\ttcp.srcPort;
+\ttcp.dstPort;
+\ttcp.seqNo;
+\ttcp.ackNo;
+\ttcp.dataOffset;
+\ttcp.res;
+\ttcp.flags;
+\ttcp.window;
+\ttcp.urgentPtr;
+\tnetec.index;
+\tnetec.type_;\n""",
     for i in range(count):
-        print """
-    netec.data_%s;""" %(i),
+        print """\t%s;""" % netec_data_instance_name(i)
 
+    print """\tmeta.cksum_compensate;\n}"""
     print """
-	meta.cksum_compensate;
-}
 field_list_calculation l4_with_netec_checksum {
     input {
         l4_with_netec_list_tcp;
@@ -76,14 +89,16 @@ field_list_calculation l4_with_netec_checksum {
 calculated_field tcp.checksum  {
 	update l4_with_netec_checksum;
 	verify l4_with_netec_checksum;
-}""",
+}"""
+
+def print_xor(count, data_width):
 
     for i in range(count):
         s = """
 // AUTOGEN
 register r_xor_%s{
 	width : %s;
-	instance_count : 65536;
+	instance_count : 32768;
 }
 blackbox stateful_alu s_xor_%s{
 	reg : r_xor_%s;
@@ -91,11 +106,11 @@ blackbox stateful_alu s_xor_%s{
     update_lo_1_predicate : condition_lo; /* the third packet */
 	update_lo_1_value : 0;
     update_lo_1_predicate : not condition_lo; /* the first/second packet */
-	update_lo_1_value : register_lo ^ netec.data_%s;
+	update_lo_1_value : register_lo ^ %s;
 
-    update_hi_1_value : register_lo ^ netec.data_%s;
+    update_hi_1_value : register_lo ^ %s;
 	output_value : alu_hi;
-	output_dst : netec.data_%s;
+	output_dst : %s;
 }
 table t_xor_%s{
 	actions{a_xor_%s;}
@@ -103,20 +118,35 @@ table t_xor_%s{
     size : 1;
 }
 action a_xor_%s(){
-	s_xor_%s.execute_stateful_alu(meta.index);
+	s_xor_%s.execute_stateful_alu(netec.index);
 }
-""" % (i, data_width, i, i, i, i, i, i, i, i, i, i)
+""" % (i, data_width, i, i, netec_data_instance_name(i), netec_data_instance_name(i), netec_data_instance_name(i), i, i, i, i, i)
         print s,
     print """
-control xor {""",
+control xor {\n"""
 
     for i in range (count):
-        s = """
-    apply(t_xor_%s);""" % (i)
+        s = """\tapply(t_xor_%s);\n""" % (i)
         print s,
     print """
 }
 """,
+
+def main():
+    count = 42
+    data_width = 32
+    header_length = 6
+
+    print """// AutoGen\n// NetEC data field count: %d\n// data width: %d\n""" % (count, data_width)
+
+    packet_size = count * (data_width / 8) + 6
+    print """#define TCP_OPTION_MSS_COMPENSATE 0x0204%04X /* MSS %d */\n""" % (packet_size, packet_size)
+
+    print_header(count, data_width)
+    print_checksum(count)
+    print_xor(count, data_width)
+
+
 
 
 if __name__ == '__main__':

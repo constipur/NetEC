@@ -22,7 +22,6 @@ limitations under the License.
 #define TCP_FLAG_PA 0x18
 #define IP_HEADER_LENGTH -20
 
-#define MSS_48_TCP_OPTION 0x02040046 /* MSS 70 */
 
 /* configuration */
 #define SWITCH_IP 0x0A00000A  /* 10.0.0.10 */
@@ -47,8 +46,6 @@ limitations under the License.
 
 header_type custom_metadata_t {
 	fields {
-		type_ : 16;
-		index : 32;
 		flag_finish : 1;
 		cksum_compensate : 32;
 		l4_proto : 16;
@@ -73,12 +70,13 @@ action a_drop() {
 
 register r_finish{
 	width : 8;
-	instance_count : 65536;
+	instance_count : 32768;
 }
 
 table t_finish{
 	actions{ a_finish; }
 	default_action : a_finish();
+	size : 1;
 }
 
 blackbox stateful_alu s_finish{
@@ -105,6 +103,7 @@ action a_finish(){
 table t_send_res{
 	actions{ a_send_res; }
 	default_action : a_send_res();
+	size : 1;
 }
 action a_send_res(){
 	modify_field(ig_intr_md_for_tm.ucast_egress_port, CLIENT_PORT);
@@ -121,6 +120,7 @@ action a_send_res(){
 table t_cksum_compensate_1{
 	actions{ a_cksum_compensate_1; }
 	default_action : a_cksum_compensate_1();
+	size : 1;
 }
 action a_cksum_compensate_1(){
 	add(meta.tcpLength, ipv4.totalLen, IP_HEADER_LENGTH/* negative */);
@@ -130,27 +130,18 @@ action a_cksum_compensate_1(){
 table t_cksum_compensate_2{
 	actions{ a_cksum_compensate_2; }
 	default_action : a_cksum_compensate_2();
+	size : 1;
 }
 action a_cksum_compensate_2(){
-	modify_field(meta.cksum_compensate, MSS_48_TCP_OPTION);
+	modify_field(meta.cksum_compensate, TCP_OPTION_MSS_COMPENSATE);
 }
-
-
-/* prepare paras for calculation */
-table t_prepare_paras{
-	actions{ a_prepare_paras; }
-	default_action : a_prepare_paras();
-}
-action a_prepare_paras(){
-	modify_field(meta.index, netec.index);
-}
-
 /* multicast */
 table t_multicast{
 	actions{
 		a_mcast;
 	}
 	default_action : a_mcast();
+	size : 1;
 }
 action a_mcast(){
 	/* TODO: multi-group configurable multicast */
@@ -161,6 +152,7 @@ action a_mcast(){
 table t_mark_sa_from_dn{
 	actions{ a_mark_sa_from_dn; }
 	default_action : a_mark_sa_from_dn();
+	size : 1;
 }
 action a_mark_sa_from_dn(){
 	modify_field(meta.sa_from_dn, 1);
@@ -174,6 +166,7 @@ register r_sa_count{
 table t_sa_count{
 	actions{ a_sa_count; }
 	default_action : a_sa_count();
+	size : 1;
 }
 action a_sa_count(){
 	s_sa_count.execute_stateful_alu(0);
@@ -202,6 +195,7 @@ blackbox stateful_alu s_sa_count{
 table t_send_sa{
 	actions{ a_send_sa; }
 	default_action : a_send_sa();
+	size : 1;
 }
 action a_send_sa(){
 	modify_field(ig_intr_md_for_tm.ucast_egress_port, CLIENT_PORT);
@@ -212,6 +206,7 @@ action a_send_sa(){
 table t_set_drop_in_egress_table{
 	actions{ a_set_drop_in_egress_table; }
 	default_action : a_set_drop_in_egress_table();
+	size : 1;
 }
 action a_set_drop_in_egress_table(){
 	modify_field(ig_intr_md_for_tm.ucast_egress_port, 136);
@@ -279,8 +274,6 @@ control ingress {
 			}
 		}else if(valid(netec)){
 			if(netec.type_ == 0){
-				/* data packets */
-				apply(t_prepare_paras);
 				/* set finish flag */
 				apply(t_finish);
 				/* calculate */
@@ -308,6 +301,7 @@ control ingress {
 table t_use_target_as_dn_port{
 	actions{ a_use_target_as_dn_port; }
 	default_action : a_use_target_as_dn_port();
+	size : 1;
 }
 action a_use_target_as_dn_port(){
 	modify_field(meta.dn_port_for_seq, eg_intr_md.egress_port);
@@ -318,6 +312,7 @@ action a_use_target_as_dn_port(){
 table t_use_src_as_dn_port{
 	actions{ a_use_src_as_dn_port; }
 	default_action : a_use_src_as_dn_port();
+	size : 1;
 }
 action a_use_src_as_dn_port(){
 	modify_field(meta.dn_port_for_seq, ig_intr_md.ingress_port);
@@ -325,6 +320,7 @@ action a_use_src_as_dn_port(){
 /* write DN's SEQ# if TCP SYN+ACK
  * read initial SEQ# if not SYN+ACK
  */
+@pragma stage 1
 table t_dn_rs_seq{
 	reads{
 		/* ND's port number */
@@ -332,6 +328,7 @@ table t_dn_rs_seq{
 	}
 	actions{ a_dn_rs_seq; a_nop; }
 	default_action : a_nop();
+	size : 256;
 }
 action a_dn_rs_seq(dn_index){
 	s_rs_seq.execute_stateful_alu(dn_index);
@@ -357,6 +354,7 @@ blackbox stateful_alu s_rs_seq{
 table t_modify_ack_to_DNs{
 	actions{ a_modify_ack_to_DNs; }
 	default_action : a_modify_ack_to_DNs();
+	size : 1;
 }
 action a_modify_ack_to_DNs(){
 	add_to_field(tcp.ackNo, meta.dn_init_seq);
@@ -365,6 +363,7 @@ action a_modify_ack_to_DNs(){
 table t_modify_seq_to_client{
 	actions{ a_modify_seq_to_client; }
 	default_action : a_modify_seq_to_client();
+	size : 1;
 }
 action a_modify_seq_to_client(){
 	subtract_from_field(tcp.seqNo, meta.dn_init_seq);
@@ -376,7 +375,7 @@ table t_modify_ip{
 	}
 	actions{ a_modify_ip; a_drop; }
 	default_action : a_drop();
-	size : 32;
+	size : 256;
 }
 action a_modify_ip(ip, mac){
 	modify_field(ipv4.dstAddr, ip);
@@ -385,6 +384,7 @@ action a_modify_ip(ip, mac){
 table t_drop_table{
 	actions{ a_drop; }
 	default_action : a_drop();
+	size : 1;
 }
 
 /*************************************************/

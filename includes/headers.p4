@@ -79,36 +79,3 @@ header_type tcp_t {
     }
 }
 header tcp_t tcp;
-
-field_list udp_checksum_list {
-        ipv4.srcAddr;
-        ipv4.dstAddr;
-		//TOFINO: A bug about alignments, the eight zeroes seem not working. We comment out the protocol field (often unchanged) to get around this bug. The TCP checksum now works fine.
-        //8'0;
-        //ipv4.protocol;
-        //meta.tcpLength;
-        udp.srcPort;
-		udp.dstPort;
-		udp.length_;
-		meta.cksum_compensate;
-		meta.cksum_compensate;
-		meta.cksum_compensate;
-		//netec.index;
-		//netec.data;
-        payload;
-}
-
-field_list_calculation udp_checksum {
-    input {
-        udp_checksum_list;
-    }
-    algorithm : csum16;
-    output_width : 16;
-}
-/*
-calculated_field udp.checksum {
-	//TOFINO: We cannot add if here on tofino, neither can we do the "verify tcp_checksum" thing, because we cannot access payloads. On the other hand, we can verify ip checksums.
-	update udp_checksum;
-}
-*/
-

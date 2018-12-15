@@ -22,7 +22,7 @@ limitations under the License.
 #define TCP_FLAG_PA 0x18
 #define IP_HEADER_LENGTH -20
 
-#define MSS_48_TCP_OPTION 0x02040030
+#define MSS_48_TCP_OPTION 0x02040046 /* MSS 70 */
 
 /* configuration */
 #define SWITCH_IP 0x0A00000A  /* 10.0.0.10 */
@@ -47,21 +47,12 @@ limitations under the License.
 
 header_type custom_metadata_t {
 	fields {
-		forward : 8;
-		data : 8;
-		res : 8 ;
 		type_ : 16;
 		index : 32;
 		flag_finish : 1;
 		cksum_compensate : 32;
 		l4_proto : 16;
-		ttl_length : 16;
-		payload_csum : 16;
 		tcpLength : 16;
-		coeff: 32;
-		temp : 16;
-		temp2 : 16;
-		to_query : 16;
 		/* for reading DN's initial SEQ# */
 		sa_from_dn : 1;
 		dn_init_seq : 32;
@@ -72,7 +63,6 @@ header_type custom_metadata_t {
 	}
 }
 metadata custom_metadata_t meta;
-metadata netec_meta_t netec_meta;
 
 action a_nop() {
 }
@@ -119,38 +109,9 @@ table t_send_res{
 action a_send_res(){
 	modify_field(ig_intr_md_for_tm.ucast_egress_port, CLIENT_PORT);
 	modify_field(ipv4.srcAddr, SWITCH_IP);
-	fill_netec_fields();
+	// fill_netec_fields();
 }
 
-//the coeff are logged
-table t_get_coeff{
-	reads {
-		ipv4.srcAddr : exact;
-	}
-	actions{
-		a_get_coeff; a_nop;
-	}
-	default_action : a_nop();
-}
-
-
-action a_get_coeff(coeff){
-	modify_field(meta.coeff, coeff);
-	modify_field(meta.temp, netec.data_0); // writing to ilog tables
-	modify_field(meta.temp2, netec.index); // writing to log tables;
-	modify_field(meta.index, netec.index);
-}
-
-table t_record{
-	actions{
-		a_record;
-	}
-	default_action : a_record();
-}
-action a_record(){
-	modify_field(ipv4.identification, netec_meta.temp_1);
-	// modify_field(ipv4.diffserv, netec_meta.temp_1);
-}
 
 /* calculate tcp compensate
  * tcp length
@@ -165,8 +126,6 @@ action a_cksum_compensate_1(){
 	add(meta.tcpLength, ipv4.totalLen, IP_HEADER_LENGTH/* negative */);
 	modify_field(meta.l4_proto, ipv4.protocol);
 	modify_field(meta.tcp_seq_no, tcp.seqNo);
-	modify_field(netec_meta.index, netec.index);
-	modify_field(netec_meta.type_, netec.type_);
 }
 table t_cksum_compensate_2{
 	actions{ a_cksum_compensate_2; }
@@ -259,23 +218,6 @@ action a_set_drop_in_egress_table(){
 	modify_field(meta.to_drop_in_egress, 1);
 }
 
-// register r_test{
-// 	width : 8;
-// 	instance_count : 1;
-// }
-// table t_test{
-// 	actions{ a_test; }
-// 	default_action : a_test();
-// }
-// action a_test(){
-// 	s_test.execute_stateful_alu(0);
-// }
-// blackbox stateful_alu s_test{
-// 	reg : r_test;
-// 	update_lo_1_value : 1;
-// }
-
-
 /************************ BEHAVIOR ************************
  * packets from CLIENT to DN:
  * on SYN: 1) Multicast, establish connection with all DNs
@@ -336,7 +278,6 @@ control ingress {
 				apply(t_set_drop_in_egress_table);
 			}
 		}else if(valid(netec)){
-			apply(t_test);
 			if(netec.type_ == 0){
 				/* data packets */
 				apply(t_prepare_paras);
@@ -357,34 +298,6 @@ control ingress {
 			}
 		}
 	}
-
-	/* UDP version */
-	// if(valid(netec)){
-	// 	apply(t_get_coeff);
-	// 	/*
-	// 	if(netec.data_0 != 0){
-	// 		apply(t_get_log);
-	// 		apply(t_log_add);
-	// 		apply(t_get_ilog);
-	// 		apply(t_record);
-	// 	}
-	// 	*/
-	// 	gf_multiply();
-	// 	/* data */
-	// 	if(netec.type_ == 0){
-	// 		xor();
-	// 		apply(t_finish);
-	// 		if(meta.flag_finish == 1){
-	// 			apply(t_send_res);
-	// 			apply(t_cksum_compensate);
-	// 		}
-	// 		else{
-	// 			apply(t_drop_table);
-	// 		}
-	// 	}
-	// }
-
-
 }
 
 /**************************************************/

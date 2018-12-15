@@ -8,7 +8,7 @@ public class BMPTransferClient{
     /* packet para */
     static final int PACKET_SIZE = BMPTransferServer.PACKET_SIZE;
     static final int HEADER_LENGTH = BMPTransferServer.HEADER_LENGTH;
-    static final int DATA_SIZE = BMPTransferServer.FIELD_COUNT * 2;
+    static final int DATA_SIZE = BMPTransferServer.FIELD_COUNT * 4;
     static final int PKT_PER_RECV_BUFFER = 1000;
 
     class DataReadCompleteException extends Exception{
@@ -156,8 +156,8 @@ public class BMPTransferClient{
     public static void main(String[] args){
         BMPTransferClient client = new BMPTransferClient(SERVER_ADDR_STR, SERVER_PORT);
         try{
-            // client.getFile(FILE_SIZE, FILE_NAME);
-            client.getInfiniteData();
+            client.getFile(FILE_SIZE, FILE_NAME);
+            // client.getInfiniteData();
         } catch(Exception e){
             e.printStackTrace();
         }

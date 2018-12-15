@@ -1,7 +1,9 @@
 # Autogen xor buffer tables and related modules
 
 def main():
-    count = 45
+    count = 16
+    data_width = 32
+
     print """
 header_type netec_t{
 	fields {
@@ -9,30 +11,36 @@ header_type netec_t{
 		index : 32;""",
     for i in range(count):
         print """
-        data_%s : 32;""" % (i),
+        data_%s : %s;""" % (i, data_width),
     print """
 	}
 }
 header netec_t netec;
 """,
+
     print """
 field_list l4_with_netec_list_udp {
 	ipv4.srcAddr;
     ipv4.dstAddr;
+	//TOFINO: A bug about alignments, the eight zeroes seem not working. We comment out the protocol field (often unchanged) to get around this bug. The TCP checksum now works fine.
+    //8'0;
+    //ipv4.protocol;
 	meta.l4_proto;
 	udp.srcPort;
 	udp.dstPort;
 	udp.length_;
-	netec_meta.index;
-	netec_meta.type_;
+	netec.index;
+	netec.type_;
 """,
+
     for i in range(count):
         print"""
-	netec_meta.res_%s;
-""" %(i),
+	netec.data_%s;""" %(i),
+
     print """
 	meta.cksum_compensate;
 }""",
+
     print """
 field_list l4_with_netec_list_tcp {
 	ipv4.srcAddr;
@@ -48,12 +56,12 @@ field_list l4_with_netec_list_tcp {
     tcp.flags;
 	tcp.window;
 	tcp.urgentPtr;
-	netec_meta.index;
-	netec_meta.type_;""",
+	netec.index;
+	netec.type_;""",
     for i in range(count):
         print """
-    netec_meta.res_%s;
-""" %(i),
+    netec.data_%s;""" %(i),
+
     print """
 	meta.cksum_compensate;
 }
@@ -69,11 +77,12 @@ calculated_field tcp.checksum  {
 	update l4_with_netec_checksum;
 	verify l4_with_netec_checksum;
 }""",
+
     for i in range(count):
         s = """
 // AUTOGEN
 register r_xor_%s{
-	width : 16;
+	width : %s;
 	instance_count : 65536;
 }
 blackbox stateful_alu s_xor_%s{
@@ -86,55 +95,26 @@ blackbox stateful_alu s_xor_%s{
 
     update_hi_1_value : register_lo ^ netec.data_%s;
 	output_value : alu_hi;
-	output_dst : netec_meta.res_%s;
+	output_dst : netec.data_%s;
 }
 table t_xor_%s{
 	actions{a_xor_%s;}
 	default_action : a_xor_%s();
+    size : 1;
 }
 action a_xor_%s(){
 	s_xor_%s.execute_stateful_alu(meta.index);
 }
-""" % (i, i, i, i, i, i, i, i, i, i, i)
+""" % (i, data_width, i, i, i, i, i, i, i, i, i, i)
         print s,
     print """
-control xor {
-""",
+control xor {""",
+
     for i in range (count):
         s = """
     apply(t_xor_%s);""" % (i)
         print s,
     print """
-}
-""",
-
-    print """
-action fill_netec_fields(){
-    """,
-    for i in range(count):
-        s = """
-    modify_field(netec.data_%s, netec_meta.res_%s);
-""" % (i, i)
-        print s,
-    print """
-}
-""",
-
-    print """
-header_type netec_meta_t{
-	fields{
-        type_ : 16;
-
-		index : 32;
-        temp : 16;
-""",
-    for i in range(count):
-        print """
-        res_%s : 32;
-        // temp_%s : 32;
-""" % (i, i),
-    print """
-    }
 }
 """,
 

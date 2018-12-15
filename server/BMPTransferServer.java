@@ -19,7 +19,7 @@ class ServerThread extends Thread{
         this.fileName = fileName;
         this.packetSize = packetSize;
         this.headerLength = headerLength;
-        this.dataLength = fieldCount * 2;
+        this.dataLength = fieldCount * 4;
         this.sendSingleFile = sendSingleFile;
         System.out.println("Packet size is: " + packetSize);
         System.out.println("MSS at receiving side is supposed to be set to " + packetSize);
@@ -151,14 +151,14 @@ public class BMPTransferServer{
 
     public static final int SERVER_PORT = 20001;
     public static final String INPUT_FILE_NAME = "/home/guest/netec-java/blue.bmp";
-    public static final int PACKET_SIZE = 48;
+    public static final int PACKET_SIZE = 70;
     public static final int HEADER_LENGTH = 6;
-    public static final int FIELD_COUNT = 8;
+    public static final int FIELD_COUNT = 16;
 
     public static void main(String[] args) throws IOException, InterruptedException {
         BMPTransferServer server = new BMPTransferServer(SERVER_PORT);
         try{
-            server.startServer(INPUT_FILE_NAME, PACKET_SIZE, HEADER_LENGTH, FIELD_COUNT, false/* send continuously */);
+            server.startServer(INPUT_FILE_NAME, PACKET_SIZE, HEADER_LENGTH, FIELD_COUNT, true/* send single file */);
         } catch(Exception e){
             e.printStackTrace();
         }

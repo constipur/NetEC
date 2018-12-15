@@ -9,7 +9,7 @@ public class BMPTransferClient{
     static final int PACKET_SIZE = BMPTransferServer.PACKET_SIZE;
     static final int HEADER_LENGTH = BMPTransferServer.HEADER_LENGTH;
     static final int DATA_SIZE = BMPTransferServer.FIELD_COUNT * 4;
-    static final int PKT_PER_RECV_BUFFER = 1000;
+    static final int PKT_PER_RECV_BUFFER = 300;
 
     class DataReadCompleteException extends Exception{
         public DataReadCompleteException(){
@@ -41,6 +41,7 @@ public class BMPTransferClient{
         System.out.println("Target server: " + serverAddr + ":" + serverPort);
         /* open socket to server */
         Socket socket = new Socket(serverAddr, serverPort);;
+        socket.setReceiveBufferSize(52200);
         System.out.println("Receiving side started!");
         System.out.println("Client Socket: " + socket);
 
@@ -156,8 +157,8 @@ public class BMPTransferClient{
     public static void main(String[] args){
         BMPTransferClient client = new BMPTransferClient(SERVER_ADDR_STR, SERVER_PORT);
         try{
-            client.getFile(FILE_SIZE, FILE_NAME);
-            // client.getInfiniteData();
+            // client.getFile(FILE_SIZE, FILE_NAME);
+            client.getInfiniteData();
         } catch(Exception e){
             e.printStackTrace();
         }

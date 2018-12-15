@@ -6,7 +6,7 @@ import java.net.*;
 class ServerThread extends Thread{
 
 
-    public static final int PACKET_AT_A_TIME = 10;
+    public static final int PACKET_AT_A_TIME = 100;
 
     private String fileName;
     private int packetSize, headerLength, dataLength;
@@ -57,50 +57,85 @@ class ServerThread extends Thread{
         try{
             /* get file inputstream */
             fileIn = new FileInputStream(fileName);
-            int bufferSize = PACKET_AT_A_TIME * packetSize;
-            byte[] buffer = new byte[bufferSize];
-            int packetCount = 0;
-            int packetAtATime = PACKET_AT_A_TIME;
 
-            while(true){
-                /* prepare data */
-                for(int i = 0;i < packetAtATime;i++){
-                    if(fileIn.read(buffer, i * packetSize + headerLength, dataLength) == -1){
-                        if(sendSingleFile){
-                            /* all data has been read */
-                            if(i == 0)
-                                /* no data to send */
-                                throw new EOReadingFileException();
-                            else{
-                                /* a few left to send */
-                                packetAtATime = i;
-                                break;
+            if(sendSingleFile){
+                int bufferSize = PACKET_AT_A_TIME * packetSize;
+                byte[] buffer = new byte[bufferSize];
+                int packetCount = 0;
+                int packetAtATime = PACKET_AT_A_TIME;
+
+                while(true){
+                    /* prepare data */
+                    for(int i = 0;i < packetAtATime;i++){
+                        if(fileIn.read(buffer, i * packetSize + headerLength, dataLength) == -1){
+                            if(sendSingleFile){
+                                /* all data has been read */
+                                if(i == 0)
+                                    /* no data to send */
+                                    throw new EOReadingFileException();
+                                else{
+                                    /* a few left to send */
+                                    packetAtATime = i;
+                                    break;
+                                }
+                            }else{
+                                fileIn.close();
+                                fileIn = new FileInputStream(fileName);
+                                continue;
                             }
-                        }else{
-                            fileIn.close();
-                            fileIn = new FileInputStream(fileName);
-                            continue;
                         }
                     }
+                    /* prepare header */
+                    for(int i = 0;i < packetAtATime;i++){
+                        byte[] type = short2byte((short)(0));
+                        byte[] index = intToByteArray((packetCount + i) % 65535);
+                        /* arraycopy(src, srcPos, dest, destPos, length) */
+                        System.arraycopy(type, 0, buffer,  packetSize * i, 2);
+                        System.arraycopy(index, 0, buffer, packetSize * i + 2, 4);
+                    }
+                    /* send to outputstream */
+                    out.write(buffer);
+                    // out.flush();
+                    /* packet counting */
+                    packetCount += packetAtATime;
+                    /* assign new memory for buffer */
+                    buffer = new byte[bufferSize];
                 }
-                /* prepare header */
-                for(int i = 0;i < packetAtATime;i++){
-                    byte[] type = short2byte((short)(0));
-                    byte[] index = intToByteArray((packetCount + i) % 65535);
-                    /* arraycopy(src, srcPos, dest, destPos, length) */
-                    System.arraycopy(type, 0, buffer,  packetSize * i, 2);
-                    System.arraycopy(index, 0, buffer, packetSize * i + 2, 4);
+            }else{
+                // send continuously
+                int fileSize = 80454;
+                int pos = 0;
+                byte[] fileBuffer = new byte[fileSize];
+                fileIn.read(fileBuffer, 0, fileSize);
+                int packetCount = 0;
+                int bufferSize = PACKET_AT_A_TIME * packetSize;
+                byte[] buffer = new byte[bufferSize];
+                int packetAtATime = PACKET_AT_A_TIME;
+
+                while(true){
+                    /* prepare data & header */
+                    for(int i = 0;i < packetAtATime;i++){
+                        byte[] type = short2byte((short)(0));
+                        byte[] index = intToByteArray((packetCount + i) % 65535);
+                        /* arraycopy(src, srcPos, dest, destPos, length) */
+                        System.arraycopy(type, 0, buffer,  packetSize * i, 2);
+                        System.arraycopy(index, 0, buffer, packetSize * i + 2, 4);
+                        System.arraycopy(fileBuffer, pos, buffer, packetSize * i + headerLength, dataLength);
+                        pos = (pos + dataLength) % (fileSize - dataLength);
+                    }
+                    /* send to outputstream */
+                    out.write(buffer);
+                    /* packet counting */
+                    packetCount += packetAtATime;
                 }
-                /* send to outputstream */
-                out.write(buffer);
-                // out.flush();
-                /* packet counting */
-                packetCount += packetAtATime;
-                /* assign new memory for buffer */
-                buffer = new byte[bufferSize];
             }
         } catch (EOReadingFileException e){
             System.out.println("All data sent!");
+            try{
+                fileIn.close();
+            }catch(Exception e2){
+                e2.printStackTrace();
+            }
         } catch (Exception e1){
             e1.printStackTrace();
             try{
@@ -151,14 +186,15 @@ public class BMPTransferServer{
 
     public static final int SERVER_PORT = 20001;
     public static final String INPUT_FILE_NAME = "/home/guest/netec-java/blue.bmp";
-    public static final int PACKET_SIZE = 166;
+    // public static final String INPUT_FILE_NAME = "/home/kongxiao0532/thu/projects/netec-pdp/code/RS/blue.bmp";
+    public static final int PACKET_SIZE = 174;
     public static final int HEADER_LENGTH = 6;
-    public static final int FIELD_COUNT = 40;
+    public static final int FIELD_COUNT = 42;
 
     public static void main(String[] args) throws IOException, InterruptedException {
         BMPTransferServer server = new BMPTransferServer(SERVER_PORT);
         try{
-            server.startServer(INPUT_FILE_NAME, PACKET_SIZE, HEADER_LENGTH, FIELD_COUNT, true/* send single file */);
+            server.startServer(INPUT_FILE_NAME, PACKET_SIZE, HEADER_LENGTH, FIELD_COUNT, false/* send continuously */);
         } catch(Exception e){
             e.printStackTrace();
         }

@@ -22,7 +22,6 @@ limitations under the License.
 #define TCP_FLAG_PA 0x18
 #define IP_HEADER_LENGTH -20
 
-
 /* configuration */
 #define SWITCH_IP 0x0A00000A  /* 10.0.0.10 */
 
@@ -43,7 +42,6 @@ limitations under the License.
 #include <tofino/stateful_alu_blackbox.p4>
 #include <tofino/constants.p4>
 
-
 header_type custom_metadata_t {
 	fields {
 		flag_finish : 1;
@@ -60,9 +58,9 @@ header_type custom_metadata_t {
 	}
 }
 metadata custom_metadata_t meta;
-
 action a_nop() {
 }
+
 
 action a_drop() {
     drop();
@@ -81,7 +79,7 @@ table t_finish{
 
 blackbox stateful_alu s_finish{
 	reg : r_finish;
-	condition_lo : register_lo < 2;
+	condition_lo : register_lo < DN_COUNT - 1;
 	update_lo_1_predicate : condition_lo;
 	update_lo_1_value : register_lo + 1;
 	update_lo_2_predicate: not condition_lo;
@@ -132,8 +130,10 @@ table t_cksum_compensate_2{
 	default_action : a_cksum_compensate_2();
 	size : 1;
 }
+
 action a_cksum_compensate_2(){
-	modify_field(meta.cksum_compensate, TCP_OPTION_MSS_COMPENSATE);
+	//modify_field(meta.cksum_compensate, TCP_OPTION_MSS_COMPENSATE);
+	modify_field(meta.cksum_compensate, 0x04080789);
 }
 /* multicast */
 table t_multicast{
@@ -143,6 +143,7 @@ table t_multicast{
 	default_action : a_mcast();
 	size : 1;
 }
+
 action a_mcast(){
 	/* TODO: multi-group configurable multicast */
 	modify_field(ig_intr_md_for_tm.mcast_grp_a, 666);
@@ -154,6 +155,7 @@ table t_mark_sa_from_dn{
 	default_action : a_mark_sa_from_dn();
 	size : 1;
 }
+
 action a_mark_sa_from_dn(){
 	modify_field(meta.sa_from_dn, 1);
 }
@@ -187,7 +189,6 @@ blackbox stateful_alu s_sa_count{
 	output_value : alu_hi;
 	output_dst : meta.sa_finish;
 }
-
 /* modify tcp.seq to 0
  * modify egress port to be CLIENT's port
  * modify source ip address to be SWITCH_IP
@@ -350,6 +351,8 @@ blackbox stateful_alu s_rs_seq{
 	output_value : alu_lo;
 	output_dst : meta.dn_init_seq;
 }
+
+
 /* modify ACK# for packets from client to DNs */
 table t_modify_ack_to_DNs{
 	actions{ a_modify_ack_to_DNs; }
@@ -358,6 +361,40 @@ table t_modify_ack_to_DNs{
 }
 action a_modify_ack_to_DNs(){
 	add_to_field(tcp.ackNo, meta.dn_init_seq);
+	//add_to_field(tcp_option.sack_l, meta.dn_init_seq);
+	//add_to_field(tcp_option.sack_r, meta.dn_init_seq);
+}
+
+table t_modify_sack_to_DNs{
+	actions{ a_modify_sack_to_DNs; }
+	default_action : a_modify_sack_to_DNs();
+	size : 1;
+}
+action a_modify_sack_to_DNs(){
+	//add_to_field(tcp.ackNo, meta.dn_init_seq);
+	add_to_field(sack1.sack_l, meta.dn_init_seq);
+	add_to_field(sack1.sack_r, meta.dn_init_seq);
+}
+
+table t_modify_sack2_to_DNs{
+	actions{ a_modify_sack2_to_DNs; }
+	default_action : a_modify_sack2_to_DNs();
+	size : 1;
+}
+action a_modify_sack2_to_DNs(){
+	//add_to_field(tcp.ackNo, meta.dn_init_seq);
+	add_to_field(sack2.sack_l, meta.dn_init_seq);
+	add_to_field(sack2.sack_r, meta.dn_init_seq);
+}
+table t_modify_sack3_to_DNs{
+	actions{ a_modify_sack3_to_DNs; }
+	default_action : a_modify_sack3_to_DNs();
+	size : 1;
+}
+action a_modify_sack3_to_DNs(){
+	//add_to_field(tcp.ackNo, meta.dn_init_seq);
+	add_to_field(sack3.sack_l, meta.dn_init_seq);
+	add_to_field(sack3.sack_r, meta.dn_init_seq);
 }
 /* modify SEQ# for data packets from DNs to client */
 table t_modify_seq_to_client{
@@ -418,6 +455,16 @@ control egress {
 	if(tcp.dstPort == NETEC_DN_PORT and tcp.flags != TCP_FLAG_SYN){
 		/* packets from client, needs to modify ACK# */
 		apply(t_modify_ack_to_DNs);
+		if(valid(sack1)){
+			apply(t_modify_sack_to_DNs);
+		}
+		if(valid(sack2)){
+			apply(t_modify_sack2_to_DNs);
+		}
+		if(valid(sack3)){
+			apply(t_modify_sack3_to_DNs);
+		}
+
 	}
 	/* modify SEQ# to match initial SEQ#(0) when sending data to client */
 	if(meta.flag_finish == 1){

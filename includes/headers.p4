@@ -79,3 +79,28 @@ header_type tcp_t {
     }
 }
 header tcp_t tcp;
+
+header_type tcp_option_t{
+	fields {
+		nop1 : 32;
+		sack_l : 32;
+		sack_r : 32;
+	}
+}
+header tcp_option_t sack1;
+
+header_type tcp_option_sack2_t{
+	fields {
+		sack_l:32;
+		sack_r:32;
+	}
+}
+header tcp_option_sack2_t sack2;
+
+header_type tcp_option_sack3_t{
+	fields {
+		sack_l:32;
+		sack_r:32;
+	}
+}
+header tcp_option_sack3_t sack3;

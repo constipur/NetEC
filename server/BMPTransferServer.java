@@ -11,7 +11,7 @@ class ServerThread extends Thread{
     private String fileName;
     private int packetSize, headerLength, dataLength;
     private Socket socket;
-    private DataOutputStream out;
+    private OutputStream out;
     private InputStream fileIn;
     private boolean sendSingleFile;
 
@@ -25,6 +25,7 @@ class ServerThread extends Thread{
         System.out.println("MSS at receiving side is supposed to be set to " + packetSize);
         socket = s;
         out = new DataOutputStream(socket.getOutputStream());
+       //out = new BufferedOutputStream(socket.getOutputStream());
         System.out.println("Connection from " +
             socket.getInetAddress().toString() + ":" + socket.getPort());
         /* calls Thread.run() */
@@ -66,15 +67,13 @@ class ServerThread extends Thread{
 
                 while(true){
                     /* prepare data */
+/*
                     for(int i = 0;i < packetAtATime;i++){
                         if(fileIn.read(buffer, i * packetSize + headerLength, dataLength) == -1){
                             if(sendSingleFile){
-                                /* all data has been read */
                                 if(i == 0)
-                                    /* no data to send */
                                     throw new EOReadingFileException();
                                 else{
-                                    /* a few left to send */
                                     packetAtATime = i;
                                     break;
                                 }
@@ -85,6 +84,7 @@ class ServerThread extends Thread{
                             }
                         }
                     }
+*/
                     /* prepare header */
                     for(int i = 0;i < packetAtATime;i++){
                         byte[] type = short2byte((short)(0));
@@ -129,6 +129,7 @@ class ServerThread extends Thread{
                     packetCount += packetAtATime;
                 }
             }
+/*
         } catch (EOReadingFileException e){
             System.out.println("All data sent!");
             try{
@@ -136,6 +137,7 @@ class ServerThread extends Thread{
             }catch(Exception e2){
                 e2.printStackTrace();
             }
+*/
         } catch (Exception e1){
             e1.printStackTrace();
             try{
@@ -172,6 +174,10 @@ public class BMPTransferServer{
             while(true){
                 /* wait for connection */
                 Socket socket = serverSocket.accept();
+		
+		//socket.setTcpNoDelay(true);
+		System.out.println(socket.getSendBufferSize());
+		//socket.setSendBufferSize(52200);
                 try{
                     new ServerThread(socket, fileName, packetSize, headerLength, fieldCount, sendSingleFile);
                 }catch(IOException e){
@@ -187,9 +193,9 @@ public class BMPTransferServer{
     public static final int SERVER_PORT = 20001;
     public static final String INPUT_FILE_NAME = "/home/guest/netec-java/blue.bmp";
     // public static final String INPUT_FILE_NAME = "/home/kongxiao0532/thu/projects/netec-pdp/code/RS/blue.bmp";
-    public static final int PACKET_SIZE = 174;
+    public static final int PACKET_SIZE = 128;
     public static final int HEADER_LENGTH = 6;
-    public static final int FIELD_COUNT = 42;
+    public static final int FIELD_COUNT = 8;
 
     public static void main(String[] args) throws IOException, InterruptedException {
         BMPTransferServer server = new BMPTransferServer(SERVER_PORT);
@@ -200,3 +206,4 @@ public class BMPTransferServer{
         }
     }
 }
+

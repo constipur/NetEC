@@ -9,7 +9,7 @@ public class BMPTransferClient{
     static final int PACKET_SIZE = BMPTransferServer.PACKET_SIZE;
     static final int HEADER_LENGTH = BMPTransferServer.HEADER_LENGTH;
     static final int DATA_SIZE = BMPTransferServer.FIELD_COUNT * 4;
-    static final int PKT_PER_RECV_BUFFER = 300;
+    static final int PKT_PER_RECV_BUFFER = 3000000;
 
     class DataReadCompleteException extends Exception{
         public DataReadCompleteException(){
@@ -27,12 +27,21 @@ public class BMPTransferClient{
 
     private class NetSpeedTimerTask extends TimerTask{
         public long readinSize = 0, lastReadinSize = 0;
+        public Socket socket;
+        public NetSpeedTimerTask(Socket socket){
+            this.socket = socket;
+        }
         @Override
         public void run() {
             /* every 1 sec */
+            try{
             long speed = readinSize - lastReadinSize;
-            System.out.print("Current receiving speed is " + speed / 1024 / 1024 * 8 + "Mbps\n");
+            System.out.print("Current receiving speed is " + speed * 8 + "bps\n");
+            System.out.println(socket.getReceiveBufferSize());
             lastReadinSize = readinSize;
+            }catch(Exception e){
+                e.printStackTrace();
+            }
         }
     }
 
@@ -41,27 +50,29 @@ public class BMPTransferClient{
         System.out.println("Target server: " + serverAddr + ":" + serverPort);
         /* open socket to server */
         Socket socket = new Socket(serverAddr, serverPort);;
-        socket.setReceiveBufferSize(52200);
+        socket.setReceiveBufferSize(772200);
+        //socket.setTcpNoDelay(true);
         System.out.println("Receiving side started!");
         System.out.println("Client Socket: " + socket);
 
         /* get in stream */
         DataInputStream in = new DataInputStream(socket.getInputStream());
-
+        //BufferedInputStream in = new BufferedInputStream(socket.getInputStream());
         int packetSize = PACKET_SIZE;
         int dataLength = DATA_SIZE;
         int packetPerBuffer = PKT_PER_RECV_BUFFER;
         int bufferSize = packetPerBuffer * packetSize;
 
         Timer speedoTimer = new Timer(true);
-        NetSpeedTimerTask speedoTask = new NetSpeedTimerTask();
+        NetSpeedTimerTask speedoTask = new NetSpeedTimerTask(socket);
 
         try{
             speedoTimer.schedule(speedoTask, 0, 1000);
+            byte[] byteBuffer = new byte[bufferSize];
+            byte[] temp = new byte[20];
             while(true){
-                byte[] byteBuffer = new byte[bufferSize];
                 /* read from inputstream */
-                speedoTask.readinSize += in.read(byteBuffer) / packetSize * dataLength;
+                speedoTask.readinSize += in.read(byteBuffer);
             }
         }catch(Exception e){
             e.printStackTrace();
@@ -164,3 +175,4 @@ public class BMPTransferClient{
         }
     }
 }
+

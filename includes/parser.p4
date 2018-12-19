@@ -19,7 +19,7 @@ parser parse_ethernet {
 parser parse_ipv4 {
 	extract(ipv4);
 	return select(ipv4.protocol) {
-		IP_PROT_TCP : parse_tcp;
+		IP_PROT_TCP : pre_parse_tcp;
 		IP_PROT_UDP : parse_udp;
 		default: ingress;
 	}
@@ -36,6 +36,14 @@ parser parse_udp {
 	}
 }
 
+parser pre_parse_tcp {
+	return select(ipv4.totalLen){
+		52 : parse_sack1;
+		60 : parse_sack2;
+		68 : parse_sack3;
+		default : parse_tcp;
+	}
+}
 /* server (sending data) port 20001 */
 parser parse_tcp {
 	extract(tcp);
@@ -46,6 +54,8 @@ parser parse_tcp {
 	}
 }
 
+
+
 parser pre_parse_netec {
 	return select(tcp.flags){
 		TCP_FLAG_ACK : parse_netec;
@@ -53,7 +63,25 @@ parser pre_parse_netec {
 		TCP_FLAG_SA : ingress;
 	}
 }
-
+parser parse_sack1 {
+	extract(tcp);
+	extract(sack1);
+	set_metadata(meta.cksum_compensate, 0);
+	return ingress;
+}
+parser parse_sack2 {
+	extract(tcp);
+	extract(sack1);
+	extract(sack2);
+	return ingress;
+}
+parser parse_sack3 {
+	extract(tcp);
+	extract(sack1);
+	extract(sack2);
+	extract(sack3);
+	return ingress;
+}
 
 parser parse_netec {
 	extract(netec);

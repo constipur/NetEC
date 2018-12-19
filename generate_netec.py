@@ -71,12 +71,19 @@ field_list l4_with_netec_list_tcp {
 \ttcp.flags;
 \ttcp.window;
 \ttcp.urgentPtr;
+\tsack1.nop1;
+\tsack1.sack_l;
+\tsack1.sack_r;
+\tsack2.sack_l;
+\tsack2.sack_r;
+\tsack3.sack_l;
+\tsack3.sack_r;
 \tnetec.index;
 \tnetec.type_;\n""",
     for i in range(count):
         print """\t%s;""" % netec_data_instance_name(i)
 
-    print """\tmeta.cksum_compensate;\n}"""
+    print """\n}"""
     print """
 field_list_calculation l4_with_netec_checksum {
     input {
@@ -112,6 +119,7 @@ blackbox stateful_alu s_xor_%s{
 	output_value : alu_hi;
 	output_dst : %s;
 }
+@pragma stage %s
 table t_xor_%s{
 	actions{a_xor_%s;}
 	default_action : a_xor_%s();
@@ -120,7 +128,7 @@ table t_xor_%s{
 action a_xor_%s(){
 	s_xor_%s.execute_stateful_alu(netec.index);
 }
-""" % (i, data_width, i, i, netec_data_instance_name(i), netec_data_instance_name(i), netec_data_instance_name(i), i, i, i, i, i)
+""" % (i, data_width, i, i, netec_data_instance_name(i), netec_data_instance_name(i), netec_data_instance_name(i), 11-(count-i)/4, i, i, i, i, i)
         print s,
     print """
 control xor {\n"""
@@ -133,7 +141,7 @@ control xor {\n"""
 """,
 
 def main():
-    count = 42
+    count = 8
     data_width = 32
     header_length = 6
 

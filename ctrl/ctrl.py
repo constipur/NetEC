@@ -119,33 +119,68 @@ class L2Test(pd_base_tests.ThriftInterfaceDataPlane):
         except Exception as e:
             pass
 
+
+        self.client.t_l2_forward_table_add_with_a_l2_forward(self.sess_hdl, self.dev_tgt,
+            netec_t_l2_forward_match_spec_t(ethernet1_dstAddr1=0x68,ethernet2_dstAddr2=macAddr_to_string("91:d0:61:b4:c4")),
+            netec_a_l2_forward_action_spec_t(action_port=136)
+            )
+
+        self.client.t_l2_forward_table_add_with_a_l2_forward(self.sess_hdl, self.dev_tgt,
+            netec_t_l2_forward_match_spec_t(ethernet1_dstAddr1=0x68,ethernet2_dstAddr2=macAddr_to_string("91:d0:61:12:3a")),
+            netec_a_l2_forward_action_spec_t(action_port=128)
+            )
+
+    
+        self.client.t_l2_forward_table_add_with_a_l2_forward(self.sess_hdl, self.dev_tgt,
+            netec_t_l2_forward_match_spec_t(ethernet1_dstAddr1=0x68,ethernet2_dstAddr2=macAddr_to_string("91:d0:61:12:5a")),
+            netec_a_l2_forward_action_spec_t(action_port=144)
+            )    
+            
+
+        self.client.t_l2_forward_table_add_with_a_l2_forward(self.sess_hdl, self.dev_tgt,
+            netec_t_l2_forward_match_spec_t(ethernet1_dstAddr1=0x68,ethernet2_dstAddr2=macAddr_to_string("91:d0:61:12:4b")),
+            netec_a_l2_forward_action_spec_t(action_port=152)
+            )
+
         # t_modify_ip table
         self.client.t_modify_ip_table_add_with_a_modify_ip(self.sess_hdl, self.dev_tgt,
             netec_t_modify_ip_match_spec_t(eg_intr_md_egress_port=136),
             netec_a_modify_ip_action_spec_t(
-                action_ip=ipv4Addr_to_i32("10.0.0.3"),
-                action_mac=macAddr_to_string("68:91:d0:61:b4:c4")
+                action_dip=ipv4Addr_to_i32("10.0.0.3"),
+                action_sip=ipv4Addr_to_i32("10.0.0.10"),
+                action_smac=macAddr_to_string("0b:22:33:44:55:66"),
+                action_mac1=0x68,
+                action_mac2=macAddr_to_string("91:d0:61:b4:c4")
             )
         )
         print self.client.t_modify_ip_table_add_with_a_modify_ip(self.sess_hdl, self.dev_tgt,
             netec_t_modify_ip_match_spec_t(eg_intr_md_egress_port=128),
             netec_a_modify_ip_action_spec_t(
-                action_ip=ipv4Addr_to_i32("10.0.0.4"),
-                action_mac=macAddr_to_string("68:91:d0:61:12:3a")
+                action_dip=ipv4Addr_to_i32("10.0.0.4"),
+                action_sip=ipv4Addr_to_i32("10.0.0.10"),
+                action_smac=macAddr_to_string("0b:22:33:44:55:66"),
+                action_mac1=0x68,
+                action_mac2=macAddr_to_string("91:d0:61:12:3a")
             )
         )
         print self.client.t_modify_ip_table_add_with_a_modify_ip(self.sess_hdl, self.dev_tgt,
             netec_t_modify_ip_match_spec_t(eg_intr_md_egress_port=144),
             netec_a_modify_ip_action_spec_t(
-                action_ip=ipv4Addr_to_i32("10.0.0.5"),
-                action_mac=macAddr_to_string("68:91:d0:61:12:5a")
+                action_dip=ipv4Addr_to_i32("10.0.0.5"),
+                action_sip=ipv4Addr_to_i32("10.0.0.10"),
+                action_smac=macAddr_to_string("0b:22:33:44:55:66"),
+                action_mac1=0x68,
+                action_mac2=macAddr_to_string("91:d0:61:12:5a")
             )
         )
         print self.client.t_modify_ip_table_add_with_a_modify_ip(self.sess_hdl, self.dev_tgt,
             netec_t_modify_ip_match_spec_t(eg_intr_md_egress_port=152),
             netec_a_modify_ip_action_spec_t(
-                action_ip=ipv4Addr_to_i32("10.0.0.6"),
-                action_mac=macAddr_to_string("68:91:d0:61:12:4b")
+                action_dip=ipv4Addr_to_i32("10.0.0.6"),
+                action_sip=ipv4Addr_to_i32("10.0.0.10"),
+                action_smac=macAddr_to_string("0b:22:33:44:55:66"),
+                action_mac1=0x68,
+                action_mac2=macAddr_to_string("91:d0:61:12:4b")
             )
         )
         # t_dn_rs_seq table

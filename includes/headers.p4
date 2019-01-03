@@ -1,12 +1,20 @@
 
-header_type ethernet_t {
+header_type ethernet1_t {
 	fields {
-	dstAddr : 48;
+	dstAddr1 : 8;
+	}
+}
+header ethernet1_t ethernet1;
+
+header_type ethernet2_t {
+	fields {
+	dstAddr2 : 40;
 	srcAddr : 48;
 	etherType : 16;
 	}
 }
-header ethernet_t ethernet;
+
+header ethernet2_t ethernet2;
 
 header_type ipv4_t {
 	fields {

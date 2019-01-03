@@ -55,6 +55,7 @@ header_type custom_metadata_t {
 		sa_finish : 1;
 		tcp_seq_no : 32;
 		to_drop_in_egress : 1;
+		normal_packet : 1 ;
 	}
 }
 metadata custom_metadata_t meta;
@@ -214,6 +215,24 @@ action a_set_drop_in_egress_table(){
 	modify_field(meta.to_drop_in_egress, 1);
 }
 
+table t_l2_forward{
+	reads{
+		ethernet1.dstAddr1 : exact;
+		ethernet2.dstAddr2 : exact;
+	}
+	actions{
+		a_l2_forward;
+		a_nop;
+	}
+	default_action:a_nop();
+}
+action a_l2_forward(port){
+	modify_field(meta.normal_packet,1);
+	modify_field(ig_intr_md_for_tm.ucast_egress_port, port);
+}
+
+
+
 /************************ BEHAVIOR ************************
  * packets from CLIENT to DN:
  * on SYN: 1) Multicast, establish connection with all DNs
@@ -236,6 +255,8 @@ action a_set_drop_in_egress_table(){
 /**************************************************/
 /**************** INGRESS pipeline ****************/
 control ingress {
+
+
 	if(valid(tcp)){
 		/* calculate tcp length for checksum */
 		apply(t_cksum_compensate_1);
@@ -243,7 +264,12 @@ control ingress {
 			/* TCP options */
 			apply(t_cksum_compensate_2);
 		}
+	} else {
+		apply(t_l2_forward);
 	}
+
+
+
 	if(tcp.dstPort == NETEC_DN_PORT){
 		/* packets from client
 		 * always multicast to all datanodes
@@ -414,9 +440,12 @@ table t_modify_ip{
 	default_action : a_drop();
 	size : 256;
 }
-action a_modify_ip(ip, mac){
-	modify_field(ipv4.dstAddr, ip);
-	modify_field(ethernet.dstAddr, mac);
+action a_modify_ip(sip, dip, smac,mac1, mac2){
+	modify_field(ipv4.srcAddr, sip);
+	modify_field(ipv4.dstAddr, dip);
+	modify_field(ethernet2.srcAddr,smac);
+	modify_field(ethernet1.dstAddr1, mac1);
+	modify_field(ethernet2.dstAddr2, mac2);
 }
 table t_drop_table{
 	actions{ a_drop; }
@@ -427,6 +456,7 @@ table t_drop_table{
 /*************************************************/
 /**************** EGRESS pipeline ****************/
 control egress {
+
 	/***************** store or read DNs' SEQ# *****************/
 	/* if packets from DNs */
 	if(tcp.srcPort == NETEC_DN_PORT){

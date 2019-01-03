@@ -6,9 +6,10 @@ parser start {
 #define ETHERTYPE_IPV4 0x0800
 
 parser parse_ethernet {
-	extract(ethernet);
-	return select(latest.etherType) {
-		ETHERTYPE_IPV4 : parse_ipv4;
+	extract(ethernet1);
+	extract(ethernet2);
+	return select(ethernet1.dstAddr1) {
+		0x11 : parse_ipv4;
 		default: ingress;
 	}
 }

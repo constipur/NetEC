@@ -40,7 +40,7 @@ this_dir = os.path.dirname(os.path.abspath(__file__))
 #
 #   ex: ["1/0", "1/1"]
 #
-fp_ports = ["1/0","2/0","3/0", "4/0"]
+fp_ports = ["1/0","2/0","3/0", "4/0", "5/0"]
 def portToPipe(port):
     return port >> 7
 
@@ -119,46 +119,100 @@ class L2Test(pd_base_tests.ThriftInterfaceDataPlane):
         except Exception as e:
             pass
 
+        # 10.0.0.3 (128)
+        self.client.t_l2_forward_table_add_with_a_l2_forward(self.sess_hdl, self.dev_tgt,
+            netec_t_l2_forward_match_spec_t(ethernet1_dstAddr1=0x68,ethernet2_dstAddr2=macAddr_to_string("91:d0:61:b4:c4")),
+            netec_a_l2_forward_action_spec_t(action_port=128)
+            )
+
+        # 10.0.0.4 (129)
+        self.client.t_l2_forward_table_add_with_a_l2_forward(self.sess_hdl, self.dev_tgt,
+            netec_t_l2_forward_match_spec_t(ethernet1_dstAddr1=0x68,ethernet2_dstAddr2=macAddr_to_string("91:d0:61:12:3a")),
+            netec_a_l2_forward_action_spec_t(action_port=136)
+            )
+
+
+        # 10.0.0.5 (136)
+        self.client.t_l2_forward_table_add_with_a_l2_forward(self.sess_hdl, self.dev_tgt,
+            netec_t_l2_forward_match_spec_t(ethernet1_dstAddr1=0x68,ethernet2_dstAddr2=macAddr_to_string("91:d0:61:12:58")),
+            netec_a_l2_forward_action_spec_t(action_port=144)
+            )
+
+
+        # 10.0.0.6 (137)
+        self.client.t_l2_forward_table_add_with_a_l2_forward(self.sess_hdl, self.dev_tgt,
+            netec_t_l2_forward_match_spec_t(ethernet1_dstAddr1=0x68,ethernet2_dstAddr2=macAddr_to_string("91:d0:61:12:5a")),
+            netec_a_l2_forward_action_spec_t(action_port=152)
+            )
+
+        # 10.0.0.7 (132)
+        self.client.t_l2_forward_table_add_with_a_l2_forward(self.sess_hdl, self.dev_tgt,
+            netec_t_l2_forward_match_spec_t(ethernet1_dstAddr1=0x68,ethernet2_dstAddr2=macAddr_to_string("91:d0:61:12:4b")),
+            netec_a_l2_forward_action_spec_t(action_port=160)
+            )
+
         # t_modify_ip table
         self.client.t_modify_ip_table_add_with_a_modify_ip(self.sess_hdl, self.dev_tgt,
-            netec_t_modify_ip_match_spec_t(eg_intr_md_egress_port=136),
+            netec_t_modify_ip_match_spec_t(eg_intr_md_egress_port=128),
             netec_a_modify_ip_action_spec_t(
-                action_ip=ipv4Addr_to_i32("10.0.0.3"),
-                action_mac=macAddr_to_string("68:91:d0:61:b4:c4")
+                action_dip=ipv4Addr_to_i32("10.0.0.3"),
+                action_sip=ipv4Addr_to_i32("10.0.0.10"),
+                action_smac=macAddr_to_string("0b:22:33:44:55:66"),
+                action_mac1=0x68,
+                action_mac2=macAddr_to_string("91:d0:61:b4:c4")
             )
         )
         print self.client.t_modify_ip_table_add_with_a_modify_ip(self.sess_hdl, self.dev_tgt,
-            netec_t_modify_ip_match_spec_t(eg_intr_md_egress_port=128),
+            netec_t_modify_ip_match_spec_t(eg_intr_md_egress_port=136),
             netec_a_modify_ip_action_spec_t(
-                action_ip=ipv4Addr_to_i32("10.0.0.4"),
-                action_mac=macAddr_to_string("68:91:d0:61:12:3a")
+                action_dip=ipv4Addr_to_i32("10.0.0.4"),
+                action_sip=ipv4Addr_to_i32("10.0.0.10"),
+                action_smac=macAddr_to_string("0b:22:33:44:55:66"),
+                action_mac1=0x68,
+                action_mac2=macAddr_to_string("91:d0:61:12:3a")
             )
         )
         print self.client.t_modify_ip_table_add_with_a_modify_ip(self.sess_hdl, self.dev_tgt,
             netec_t_modify_ip_match_spec_t(eg_intr_md_egress_port=144),
             netec_a_modify_ip_action_spec_t(
-                action_ip=ipv4Addr_to_i32("10.0.0.5"),
-                action_mac=macAddr_to_string("68:91:d0:61:12:5a")
+                action_dip=ipv4Addr_to_i32("10.0.0.5"),
+                action_sip=ipv4Addr_to_i32("10.0.0.10"),
+                action_smac=macAddr_to_string("0b:22:33:44:55:66"),
+                action_mac1=0x68,
+                action_mac2=macAddr_to_string("91:d0:61:12:58")
             )
         )
         print self.client.t_modify_ip_table_add_with_a_modify_ip(self.sess_hdl, self.dev_tgt,
             netec_t_modify_ip_match_spec_t(eg_intr_md_egress_port=152),
             netec_a_modify_ip_action_spec_t(
-                action_ip=ipv4Addr_to_i32("10.0.0.6"),
-                action_mac=macAddr_to_string("68:91:d0:61:12:4b")
+                action_dip=ipv4Addr_to_i32("10.0.0.6"),
+                action_sip=ipv4Addr_to_i32("10.0.0.10"),
+                action_smac=macAddr_to_string("0b:22:33:44:55:66"),
+                action_mac1=0x68,
+                action_mac2=macAddr_to_string("91:d0:61:12:5a")
+            )
+        )
+        print self.client.t_modify_ip_table_add_with_a_modify_ip(self.sess_hdl, self.dev_tgt,
+            netec_t_modify_ip_match_spec_t(eg_intr_md_egress_port=160),
+            netec_a_modify_ip_action_spec_t(
+                action_dip=ipv4Addr_to_i32("10.0.0.7"),
+                action_sip=ipv4Addr_to_i32("10.0.0.10"),
+                action_smac=macAddr_to_string("0b:22:33:44:55:66"),
+                action_mac1=0x68,
+                action_mac2=macAddr_to_string("91:d0:61:12:4b")
             )
         )
         # t_dn_rs_seq table
         self.client.t_dn_rs_seq_table_add_with_a_dn_rs_seq(self.sess_hdl, self.dev_tgt,
-            netec_t_dn_rs_seq_match_spec_t(meta_dn_port_for_seq=128),
+            netec_t_dn_rs_seq_match_spec_t(meta_dn_port_for_seq=144),
             netec_a_dn_rs_seq_action_spec_t(action_dn_index=0)
         )
         self.client.t_dn_rs_seq_table_add_with_a_dn_rs_seq(self.sess_hdl, self.dev_tgt,
-            netec_t_dn_rs_seq_match_spec_t(meta_dn_port_for_seq=144),
+            netec_t_dn_rs_seq_match_spec_t(meta_dn_port_for_seq=152),
             netec_a_dn_rs_seq_action_spec_t(action_dn_index=1)
         )
         self.client.t_dn_rs_seq_table_add_with_a_dn_rs_seq(self.sess_hdl, self.dev_tgt,
-            netec_t_dn_rs_seq_match_spec_t(meta_dn_port_for_seq=152),
+            netec_t_dn_rs_seq_match_spec_t(meta_dn_port_for_seq=160),
             netec_a_dn_rs_seq_action_spec_t(action_dn_index=2)
         )
 
@@ -184,15 +238,13 @@ class L2Test(pd_base_tests.ThriftInterfaceDataPlane):
 
         mc_sess_hdl = self.mc.mc_create_session()
         mgrp_hdl = self.mc.mc_mgrp_create(mc_sess_hdl, 0, 666)
-        l1_hdl1 = self.mc.mc_node_create(mc_sess_hdl, 0, 1, set_port_map([128]), set_lag_map([]))
-        l1_hdl2 = self.mc.mc_node_create(mc_sess_hdl, 0, 2, set_port_map([136]), set_lag_map([]))
-        l1_hdl3 = self.mc.mc_node_create(mc_sess_hdl, 0, 3, set_port_map([144]), set_lag_map([]))
-        l1_hdl4 = self.mc.mc_node_create(mc_sess_hdl, 0, 4, set_port_map([152]), set_lag_map([]))
+        l1_hdl1 = self.mc.mc_node_create(mc_sess_hdl, 0, 1, set_port_map([144]), set_lag_map([]))
+        l1_hdl2 = self.mc.mc_node_create(mc_sess_hdl, 0, 2, set_port_map([152]), set_lag_map([]))
+        l1_hdl3 = self.mc.mc_node_create(mc_sess_hdl, 0, 3, set_port_map([160]), set_lag_map([]))
 
         self.mc.mc_associate_node(mc_sess_hdl, 0, mgrp_hdl, l1_hdl1, 0, 0)
-        # self.mc.mc_associate_node(mc_sess_hdl, 0, mgrp_hdl, l1_hdl2, 0, 0)
+        self.mc.mc_associate_node(mc_sess_hdl, 0, mgrp_hdl, l1_hdl2, 0, 0)
         self.mc.mc_associate_node(mc_sess_hdl, 0, mgrp_hdl, l1_hdl3, 0, 0)
-        self.mc.mc_associate_node(mc_sess_hdl, 0, mgrp_hdl, l1_hdl4, 0, 0)
         self.mc.mc_complete_operations(mc_sess_hdl)
 
     	print "Finish Configuring Mcast"

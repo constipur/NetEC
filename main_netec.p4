@@ -25,9 +25,10 @@ limitations under the License.
 /* configuration */
 #define SWITCH_IP 0x0A00000A  /* 10.0.0.10 */
 
-#define NETEC_DN_PORT 20001
+#define NETEC_DN_PORT 9866
 
 #define DN_COUNT 3
+#define FLOW_COUNT 2
 
 #define CLIENT_PORT 136
 #define DN_PORT_1 128
@@ -104,9 +105,10 @@ table t_send_res{
 	default_action : a_send_res();
 	size : 1;
 }
+/* modify source ip address to be dst ip */
 action a_send_res(){
 	modify_field(ig_intr_md_for_tm.ucast_egress_port, CLIENT_PORT);
-	modify_field(ipv4.srcAddr, SWITCH_IP);
+	modify_field(ipv4.srcAddr, ipv4.dstAddr);
 	// fill_netec_fields();
 }
 
@@ -147,7 +149,9 @@ table t_multicast{
 
 action a_mcast(){
 	/* TODO: multi-group configurable multicast */
+	/* modify scr ip to be dst ip */
 	modify_field(ig_intr_md_for_tm.mcast_grp_a, 666);
+	modify_field(ipv4.srcAddr, ipv4.dstAddr);
 }
 
 /* mark that we need to store the SEQ# */
@@ -167,12 +171,15 @@ register r_sa_count{
 	instance_count : 1;
 }
 table t_sa_count{
+	reads {
+		ipv4.dstAddr : exact;
+	}
 	actions{ a_sa_count; }
 	default_action : a_sa_count();
-	size : 1;
+	size : FLOW_COUNT;
 }
-action a_sa_count(){
-	s_sa_count.execute_stateful_alu(0);
+action a_sa_count(flow_num){
+	s_sa_count.execute_stateful_alu(flow_num);
 }
 blackbox stateful_alu s_sa_count{
 	reg : r_sa_count;
@@ -199,10 +206,11 @@ table t_send_sa{
 	default_action : a_send_sa();
 	size : 1;
 }
+/* modify source ip address to be dst ip */
 action a_send_sa(){
 	modify_field(ig_intr_md_for_tm.ucast_egress_port, CLIENT_PORT);
 	modify_field(tcp.seqNo, 0);
-	modify_field(ipv4.srcAddr, SWITCH_IP);
+	modify_field(ipv4.srcAddr, ipv4.dstAddr);
 }
 
 table t_set_drop_in_egress_table{
@@ -300,21 +308,19 @@ control ingress {
 				apply(t_set_drop_in_egress_table);
 			}
 		}else if(valid(netec)){
-			if(netec.type_ == 0){
-				/* set finish flag */
-				apply(t_finish);
-				/* calculate */
-				xor();
-				/* if finish, fill in data and send out */
-				if(meta.flag_finish == 1){
-					apply(t_send_res);
-				}
-				else{
-					/* to-be-dropped packets also need to
-					 * get into egress pipeline
-					 */
-					apply(t_set_drop_in_egress_table);
-				}
+			/* set finish flag */
+			apply(t_finish);
+			/* calculate */
+			xor();
+			/* if finish, fill in data and send out */
+			if(meta.flag_finish == 1){
+				apply(t_send_res);
+			}
+			else{
+				/* to-be-dropped packets also need to
+				 * get into egress pipeline
+				 */
+				apply(t_set_drop_in_egress_table);
 			}
 		}
 	}
@@ -352,6 +358,7 @@ table t_dn_rs_seq{
 	reads{
 		/* ND's port number */
 		meta.dn_port_for_seq : exact;
+		ipv4.dstAddr : exact;
 	}
 	actions{ a_dn_rs_seq; a_nop; }
 	default_action : a_nop();
@@ -362,7 +369,7 @@ action a_dn_rs_seq(dn_index){
 }
 register r_dn_rs_seq{
 	width : 32;
-	instance_count : DN_COUNT; /* the number of DNs */
+	instance_count : 100; /* the number of DNs */
 }
 blackbox stateful_alu s_rs_seq{
 	reg : r_dn_rs_seq;
@@ -440,8 +447,7 @@ table t_modify_ip{
 	default_action : a_drop();
 	size : 256;
 }
-action a_modify_ip(sip, dip, smac,mac1, mac2){
-	modify_field(ipv4.srcAddr, sip);
+action a_modify_ip(dip, smac, mac1, mac2){
 	modify_field(ipv4.dstAddr, dip);
 	modify_field(ethernet2.srcAddr,smac);
 	modify_field(ethernet1.dstAddr1, mac1);

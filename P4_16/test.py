@@ -26,7 +26,7 @@ import sys
 import time
 import unittest
 
-from syn_proxy.p4_pd_rpc.ttypes import *
+#from syn_proxy.p4_pd_rpc.ttypes import *
 from pltfm_pm_rpc.ttypes import *
 from pal_rpc.ttypes import *
 from ptf import config
@@ -62,7 +62,7 @@ INTERNAL_PORT = 144
 
 
 #
-fp_ports = ["1/0","2/0","3/0", "4/0"]
+fp_ports = ["1/0","2/0","3/0", "4/0","5/0"]
 
 def mirror_session(mir_type, mir_dir, sid, egr_port=0, egr_port_v=False,
                    egr_port_queue=0, packet_color=0, mcast_grp_a=0,

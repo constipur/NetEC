@@ -154,6 +154,9 @@ class L2Test(pd_base_tests.ThriftInterfaceDataPlane):
                                         pal_port_speed_t.BF_SPEED_40G,
                                         pal_fec_type_t.BF_FEC_TYP_NONE)
                     self.pal.pal_port_enable(0, i)
+
+                self.pal.pal_port_loopback_mode_set(0,self.devPorts[-1],1)
+
                 self.conn_mgr.complete_operations(self.sess_hdl)
         except Exception as e:
             pass

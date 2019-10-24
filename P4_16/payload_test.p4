@@ -4,7 +4,6 @@
 header resubmit_h {
     bit<16> current_16_bit_sum;
     bit<16> initial_csum;
-    bit<32> _pad1;
 }
 
 
@@ -27,22 +26,14 @@ struct metadata_t {
 // ---------------------------------------------------------------------------
 // custom header
 // ---------------------------------------------------------------------------
-header pad_h {
-    bit<128> b1;
-    bit<128> b2;
-    bit<128> b3;
-    bit<128> b4;
-    bit<16> b5;
-}
+
 header payload_0_h {
     bit<16> c0;
     bit<16> c1;
     bit<16> c2;
 }
-header payload_1_h {
-    //bit<16> c;
-    
-    bit<128> c0; //16B
+header payload_1_h {//160B
+    bit<128> c0; 
     bit<128> c1;
     bit<128> c2;
     bit<128> c3;
@@ -52,25 +43,6 @@ header payload_1_h {
     bit<128> d3;
     bit<128> e0;
     bit<128> e1;
-    //bit<128> e2;
-    //bit<128> e3;
-}
-
-header payload_2_h {
-    //bit<16> c;
-    
-    bit<128> c0; //16B
-    bit<128> c1;
-    bit<128> c2;
-    bit<128> c3;
-    bit<128> d0;
-    bit<128> d1;
-    bit<128> d2;
-    bit<128> d3;
-    bit<128> e0;
-    bit<80> e1;
-    //bit<128> e2;
-    //bit<128> e3;
 }
 
 
@@ -81,11 +53,8 @@ struct custom_header_t {
     ethernet_h ethernet;
     ipv4_h ipv4;
     tcp_h tcp;
-    pad_h pad;
     payload_0_h payload_0;
     payload_1_h payload_1;
-    payload_2_h payload_2;
-    
 }
 
 
@@ -142,32 +111,40 @@ parser SwitchIngressParser(
         pkt.extract(hdr.tcp);
         
         transition select(hdr.ipv4.total_len) {
-            360: parse_tcp_payload;
+            680: parse_tcp0;
             default : accept;
         }
     }
     
-    state parse_tcp_payload {
-        transition select(hdr.tcp.urgent_ptr){
-            0 : parse_tcp1;
-            default : parse_tcp2;
-            
+    
+    state parse_tcp0 {
+        ig_md.temp = 1;
+        transition select(hdr.ipv4.diffserv){
+            3 : parse_tcp02;
+            4 : parse_6;
+            5 : accept;
+            6 : accept;
+            7 : accept;
+            default : parse_tcp01;
         }
     }
-    
 
-    state parse_tcp1 {
-        pkt.advance(2512);
+    state parse_tcp01 {
+        pkt.advance(1280);//160B
         pkt.extract(hdr.payload_0);
-        ig_md.temp = 1;
-        transition accept;
-    }
-    state parse_tcp2 {
-        ig_md.temp = 2;
         transition accept;
     }
 
+    state parse_tcp02 {
+        pkt.advance(1232);//154B
+        pkt.extract(hdr.payload_0);//for the final advance to take effect
+        transition accept;
+    }
 
+    state parse_6{
+        pkt.extract(hdr.payload_0);
+        transition accept;
+    }
 }
 
 
@@ -182,7 +159,6 @@ control SwitchIngress(
         inout ingress_intrinsic_metadata_for_deparser_t ig_intr_dprsr_md,
         inout ingress_intrinsic_metadata_for_tm_t ig_intr_tm_md) {
     
-    Checksum() csum;
     action a_to_128() {
         ig_intr_tm_md.ucast_egress_port = 128;  
     }
@@ -191,7 +167,8 @@ control SwitchIngress(
     }
 
     action a_test() {
-        hdr.ipv4.ttl = 60  ;
+        hdr.ipv4.ttl = 60;
+        //hdr.ipv4.identification = 0x1;
         ig_md.tcp_length = hdr.ipv4.total_len - 20;
         ig_md.ip_proto_16 = 8w0x0 ++ hdr.ipv4.protocol;
         
@@ -218,31 +195,38 @@ control SwitchIngress(
     }
     action a_set_resubmit (){
         ig_intr_dprsr_md.resubmit_type = 3w1;
-        
     }
 
     action a_recirc() {
         ig_intr_tm_md.ucast_egress_port = 160;  
-        hdr.payload_0.setInvalid();
-        hdr.tcp.urgent_ptr = 1;
+        //hdr.payload_0.setInvalid();
+        hdr.ipv4.diffserv = hdr.ipv4.diffserv + 1;  
     }
+
+    action a_recirc2() {
+        ig_intr_tm_md.ucast_egress_port = 160;  
+        hdr.payload_0.setInvalid();
+        hdr.ipv4.diffserv = hdr.ipv4.diffserv + 1;
+    }
+
     action a_part_one() {
         ig_intr_tm_md.ucast_egress_port = 160; 
-        //hdr.payload_0.setInvalid(); 
+        hdr.payload_0.setInvalid(); 
         hdr.payload_1.setValid();
-        hdr.payload_1.e1 = 0x1;
-        hdr.tcp.urgent_ptr = hdr.tcp.urgent_ptr + 1;
-        ig_md.csum_1 = 1;
+        hdr.payload_1.e1 = 1;
+        hdr.ipv4.diffserv = hdr.ipv4.diffserv + 1;
+        ig_md.csum_2 = 1;
+        ig_md.csum_1 = 0;
     }
 
     action a_part_two() {
         ig_intr_tm_md.ucast_egress_port = 128;  
-        //hdr.payload_0.setInvalid();
-        hdr.payload_2.setValid();
-        hdr.payload_2.e1 = 0x2;
-        ig_md.checksum = ~hdr.tcp.checksum;
-        hdr.tcp.urgent_ptr = 0;
-        ig_md.csum_2 = 1;
+        hdr.payload_0.setInvalid();
+        hdr.payload_1.setValid();
+        hdr.payload_1.e1 = 1;
+        hdr.ipv4.diffserv = 0;
+        ig_md.csum_1 = 1;
+        ig_md.csum_2 = 0;
     }
 
     table ttl{
@@ -260,20 +244,60 @@ control SwitchIngress(
         default_action = a_ttl;
     }
 
+    action a_set_0(){
+        ig_md.checksum = 0;
+    }
+    action a_set_neg(){
+        ig_md.checksum = ~hdr.tcp.checksum;
+        //hdr.ipv4.identification = ~hdr.tcp.checksum;
+    }
+    table t_cksum{
+        key = {
+            hdr.ipv4.diffserv : exact;
+        }
+        actions = {
+            a_set_0;
+            a_set_neg;
+        }
+        const entries = {
+            4 : a_set_0();
+        }
+        default_action = a_set_neg;
+    }
+
+
+
     apply {
         to_eg.apply();
         a_test();
+
+        t_cksum.apply();
+
+
         if(ig_md.temp == 1){
-            a_recirc();
-            return;
+            if(hdr.ipv4.diffserv < 3)
+            {
+                a_recirc();
+            }
+            else if (hdr.ipv4.diffserv == 3){
+                a_recirc2();
+            }
+            else if(hdr.ipv4.diffserv < 7){
+                a_part_one();
+            }else {
+                a_part_two();
+            }
         }
-        if (hdr.tcp.urgent_ptr == 1){
+
+
+        /*
+        if (hdr.tcp.urgent_ptr < 3){
             a_part_one();
         }
-        else if (hdr.tcp.urgent_ptr == 2){
+        else{
             a_part_two();
         }
-    
+        */
 
 
         /*
@@ -300,11 +324,12 @@ control SwitchIngressDeparser(
     Checksum() tcp_checksum;
     Checksum() ipv4_checksum;
     apply {
-        
+        /*
         if(ig_intr_dprsr_md.resubmit_type == 3w1){
             resubmit.emit(ig_md.resubmit_hdr);
             //return here
-        } 
+        } */
+
 
         if(ig_md.csum_1 == 1){
             hdr.tcp.checksum = tcp_checksum.update(
@@ -322,7 +347,7 @@ control SwitchIngressDeparser(
                     hdr.tcp.res,
                     hdr.tcp.flags,
                     hdr.tcp.window,
-                    //hdr.tcp.urgent_ptr,
+                    hdr.tcp.urgent_ptr,
 
                     hdr.payload_1.c0,
                     hdr.payload_1.c1,
@@ -335,26 +360,23 @@ control SwitchIngressDeparser(
                     hdr.payload_1.e0,
                     hdr.payload_1.e1,
 
-                    hdr.payload_0.c0,
-                    hdr.payload_0.c1,
-                    hdr.payload_0.c2
-
+                    ig_md.checksum
                 }
             );
         }
         if(ig_md.csum_2 == 1){
             hdr.tcp.checksum = tcp_checksum.update({
                 ig_md.checksum,
-                hdr.payload_2.c0,
-                hdr.payload_2.c1,
-                hdr.payload_2.c2,
-                hdr.payload_2.c3,
-                hdr.payload_2.d0,
-                hdr.payload_2.d1,
-                hdr.payload_2.d2,
-                hdr.payload_2.d3,
-                hdr.payload_2.e0,
-                hdr.payload_2.e1
+                hdr.payload_1.c0,
+                hdr.payload_1.c1,
+                hdr.payload_1.c2,
+                hdr.payload_1.c3,
+                hdr.payload_1.d0,
+                hdr.payload_1.d1,
+                hdr.payload_1.d2,
+                hdr.payload_1.d3,
+                hdr.payload_1.e0,
+                hdr.payload_1.e1
             });
         }
         
@@ -374,11 +396,8 @@ control SwitchIngressDeparser(
         pkt.emit(hdr.ethernet);
         pkt.emit(hdr.ipv4);
         pkt.emit(hdr.tcp);
-        //pkt.emit(hdr.pad);
-        
         pkt.emit(hdr.payload_1);
-        pkt.emit(hdr.payload_2);
-        //pkt.emit(hdr.payload_0);
+        pkt.emit(hdr.payload_0);
     
     }
 }

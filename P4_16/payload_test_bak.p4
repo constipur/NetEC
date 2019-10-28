@@ -101,7 +101,7 @@ parser SwitchIngressParser(
         pkt.extract(hdr.tcp);
         //Do not parse control packets like SYN/ACK
         transition select(hdr.ipv4.total_len) {
-            680: parse_tcp0; 
+            1320: parse_tcp0; 
             default : accept;
         }
     }
@@ -109,13 +109,11 @@ parser SwitchIngressParser(
     
     state parse_tcp0 {
         ig_md.temp = 1;
+
         transition select(hdr.ipv4.diffserv){
-            3 : parse_tcp01;
-            4 : parse_6;
-            5 : accept;
-            6 : accept;
-            7 : accept;
-            default : parse_tcp01;
+            8w0 &&& 8w0x08 : parse_tcp01;
+            8 : parse_6;
+            default : accept;
         }
     }
 
@@ -231,14 +229,14 @@ control SwitchIngress(
         t_cksum.apply();
 
         if(ig_md.temp == 1){
-            if(hdr.ipv4.diffserv < 3)
+            if(hdr.ipv4.diffserv < 7)
             {
                 a_recirc();
             }
-            else if (hdr.ipv4.diffserv == 3){
+            else if (hdr.ipv4.diffserv == 7){
                 a_recirc2();
             }
-            else if(hdr.ipv4.diffserv < 7){
+            else if(hdr.ipv4.diffserv < 15){
                 a_part_one();
             }else {
                 a_part_two();
